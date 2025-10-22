@@ -34,7 +34,7 @@ def restore_checkpoint(filename, champions_arr_path):
     import gzip
     import pickle
     import random
-    from neat import Population
+    from custom_neat_lib import Population
     """Resumes the simulation from a previous saved point."""
     with gzip.open(filename) as f:
         generation, config, population, species_set, rndstate = pickle.load(f)

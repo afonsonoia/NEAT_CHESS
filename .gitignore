@@ -9,3 +9,13 @@ env/
 # Python cache
 __pycache__/
 *.py[cod]
+
+champions
+
+backups
+
+___CONTINUE.txt
+
+leaderboard_elo.txt
+
+.pytest_cache

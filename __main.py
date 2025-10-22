@@ -487,7 +487,8 @@ if __name__ == "__main__":
             pop = restore_checkpoint(lastBackupPath, champions_arr_path=path_champions)
             print("continuing from backup")
 
-        except:
+        except Exception as e:
+            print(e)
             print("new population")
             full_reset()
             pop = custom_neat_lib.Population(config, path_champions=path_champions)
