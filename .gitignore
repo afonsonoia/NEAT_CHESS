@@ -19,3 +19,9 @@ ___CONTINUE.txt
 leaderboard_elo.txt
 
 .pytest_cache
+
+aux_files/__puzzles_results
+aux_files/Custom
+aux_files/Me
+aux_files/Super_GMs_PGNs
+aux_files/TWIC_PGNS
