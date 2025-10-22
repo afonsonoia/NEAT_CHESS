@@ -1,0 +1,5 @@
+Incremental Elo Leaderboard (sorted by Elo)
+============================================================
+
+1. champ1 | Elo: 24.50 (Games: 2)
+2. champ0 | Elo: 1.00 (Games: 2)

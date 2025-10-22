@@ -1,0 +1,2 @@
+from custom_neat_lib.nn.feed_forward import FeedForwardNetwork
+from custom_neat_lib.nn.recurrent import RecurrentNetwork

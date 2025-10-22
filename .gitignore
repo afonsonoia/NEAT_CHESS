@@ -1,0 +1,11 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# PyCharm IDE folder
+.idea/
+
+# Python cache
+__pycache__/
+*.py[cod]
