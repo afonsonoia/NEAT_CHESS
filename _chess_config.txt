@@ -12,9 +12,9 @@ reset_on_extinction   = 0
 
 [DefaultGenome]
 num_inputs              = 64
-num_hidden              = 0
+num_hidden              = 12
 num_outputs             = 1
-initial_connection      = partial_nodirect 1.0
+initial_connection      = partial_nodirect 0.9
 feed_forward            = True
 
 compatibility_disjoint_coefficient    = 1.0
@@ -64,7 +64,7 @@ enabled_default         = True
 enabled_mutate_rate     = 0.0002
 
 [DefaultSpeciesSet]
-compatibility_threshold = 3
+compatibility_threshold = 4.0
 
 [DefaultStagnation]
 species_fitness_func = max

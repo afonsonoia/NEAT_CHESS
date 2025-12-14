@@ -320,7 +320,7 @@ def eval_function_simple(genome, config, champions_arr:list, generation_number:i
     BONUS_BOT_WIN_CHAMP = 1.0
 
     if len(champions_arr) > 0:
-        MAX_N_GAMES = max(int(log2(len(champions_arr))), 1)
+        MAX_N_GAMES = max(int(log2(len(champions_arr)**2)), 1)
 
     bot = Bot(genome, config)
     total_score = 0

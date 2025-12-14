@@ -1,9 +1,0 @@
-[Event "Neural Networks Training Vs Human"]
-[Site "?"]
-[Date "????.??.??"]
-[Round "?"]
-[White "Champion 1"]
-[Black "Not fully working label"]
-[Result "*"]
-
-1. Nf3 d5 2. Nd4 e5 3. a3 exd4 4. e4 dxe3 5. d4 e2 6. Qd2 exf1=Q+ 7. Rxf1 Nf6 8. Rh1 Ne4 9. Qg5 Nxg5 10. Kd2 Nf3+ 11. gxf3 Qg5+ 12. f4 Qxf4+ 13. Ke1 Qf3 14. Kd2 Qxh1 15. h3 Qxh3 16. b3 Qg2 17. b4 Qxf2+ 18. Kd1 Bg4# *
