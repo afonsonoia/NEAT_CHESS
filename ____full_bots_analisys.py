@@ -3,22 +3,30 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from datetime import datetime
 
 # ================= CONFIG =================
-BOT_NUMBER = 6
+BOT_NUMBER = 5
 
 CHAMPIONS_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
 ELO_PATH = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\leaderboard_elo.txt"
 
-PLOTS_BASE_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\bot_analisys_plots"
-PLOTS_BY_BOT = os.path.join(PLOTS_BASE_DIR, "by_bot_number")
-PLOTS_BY_ELO = os.path.join(PLOTS_BASE_DIR, "by_elo")
+PLOTS_ROOT_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\bot_analisys_plots"
 # =========================================
+
+# ================= DATE FOLDER =================
+today_str = datetime.now().strftime("%d_%m_%Y")
+PLOTS_DATE_DIR = os.path.join(PLOTS_ROOT_DIR, today_str)
+
+PLOTS_BY_BOT = os.path.join(PLOTS_DATE_DIR, "by_bot_number")
+PLOTS_BY_ELO = os.path.join(PLOTS_DATE_DIR, "by_elo")
 
 os.makedirs(PLOTS_BY_BOT, exist_ok=True)
 os.makedirs(PLOTS_BY_ELO, exist_ok=True)
 
 # ================= LOAD BOTS =================
+BOT_NUMBER += 1
+
 bots = []
 for i in range(BOT_NUMBER):
     with open(os.path.join(CHAMPIONS_DIR, f"champ_{i}.pickle"), "rb") as f:
@@ -92,7 +100,6 @@ with open(ELO_PATH, "r", encoding="utf-8") as f:
     for line in f:
         line = line.strip()
         if "champ" in line and "Elo:" in line:
-            # Example: 1. champ4 | Elo: 60.67 (Games: 8)
             champ_id = int(line.split("champ")[1].split("|")[0].strip())
             elo = float(line.split("Elo:")[1].split("(")[0].strip())
             elo_by_bot[champ_id] = elo
@@ -107,7 +114,6 @@ superior   = [stats[i]["superior_to"] for i in bots_idx]
 inferior   = [stats[i]["inferior_to"] for i in bots_idx]
 equivalent = [stats[i]["equivalent_to"] for i in bots_idx]
 
-# ---- Elo ordered ----
 elo_sorted_bots = sorted(
     [i for i in bots_idx if i in elo_by_bot],
     key=lambda x: elo_by_bot[x]
@@ -144,24 +150,34 @@ def plot_elo(x, y, title, ylabel, path):
     plt.close()
 
 # ================= SAVE BOT-NUMBER PLOTS =================
-plot_bar(bots_idx, wins, "Wins per bot", "Wins", os.path.join(PLOTS_BY_BOT, "wins_per_bot.png"))
-plot_bar(bots_idx, losses, "Losses per bot", "Losses", os.path.join(PLOTS_BY_BOT, "losses_per_bot.png"))
-plot_bar(bots_idx, draws, "Draws per bot", "Draws", os.path.join(PLOTS_BY_BOT, "draws_per_bot.png"))
+plot_bar(bots_idx, wins, "Wins per bot", "Wins",
+         os.path.join(PLOTS_BY_BOT, "wins_per_bot.png"))
+plot_bar(bots_idx, losses, "Losses per bot", "Losses",
+         os.path.join(PLOTS_BY_BOT, "losses_per_bot.png"))
+plot_bar(bots_idx, draws, "Draws per bot", "Draws",
+         os.path.join(PLOTS_BY_BOT, "draws_per_bot.png"))
 
-plot_bar(bots_idx, superior, "Bots each bot is superior to", "Superior to", os.path.join(PLOTS_BY_BOT, "superiority.png"))
-plot_bar(bots_idx, inferior, "Bots superior to each bot", "Inferior to", os.path.join(PLOTS_BY_BOT, "inferiority.png"))
-plot_bar(bots_idx, equivalent, "Equivalent bots", "Equivalent to", os.path.join(PLOTS_BY_BOT, "equivalent.png"))
+plot_bar(bots_idx, superior, "Bots each bot is superior to", "Superior to",
+         os.path.join(PLOTS_BY_BOT, "superiority.png"))
+plot_bar(bots_idx, inferior, "Bots superior to each bot", "Inferior to",
+         os.path.join(PLOTS_BY_BOT, "inferiority.png"))
+plot_bar(bots_idx, equivalent, "Equivalent bots", "Equivalent to",
+         os.path.join(PLOTS_BY_BOT, "equivalent.png"))
 
 # ================= SAVE ELO PLOTS =================
-plot_elo(elo_x, wins_elo, "Wins vs Elo", "Wins", os.path.join(PLOTS_BY_ELO, "wins_vs_elo.png"))
-plot_elo(elo_x, losses_elo, "Losses vs Elo", "Losses", os.path.join(PLOTS_BY_ELO, "losses_vs_elo.png"))
-plot_elo(elo_x, draws_elo, "Draws vs Elo", "Draws", os.path.join(PLOTS_BY_ELO, "draws_vs_elo.png"))
+plot_elo(elo_x, wins_elo, "Wins vs Elo", "Wins",
+         os.path.join(PLOTS_BY_ELO, "wins_vs_elo.png"))
+plot_elo(elo_x, losses_elo, "Losses vs Elo", "Losses",
+         os.path.join(PLOTS_BY_ELO, "losses_vs_elo.png"))
+plot_elo(elo_x, draws_elo, "Draws vs Elo", "Draws",
+         os.path.join(PLOTS_BY_ELO, "draws_vs_elo.png"))
 
-plot_elo(elo_x, superior_elo, "Superior to vs Elo", "Superior to", os.path.join(PLOTS_BY_ELO, "superiority_vs_elo.png"))
-plot_elo(elo_x, inferior_elo, "Inferior to vs Elo", "Inferior to", os.path.join(PLOTS_BY_ELO, "inferiority_vs_elo.png"))
-plot_elo(elo_x, equivalent_elo, "Equivalent to vs Elo", "Equivalent to", os.path.join(PLOTS_BY_ELO, "equivalent_vs_elo.png"))
+plot_elo(elo_x, superior_elo, "Superior to vs Elo", "Superior to",
+         os.path.join(PLOTS_BY_ELO, "superiority_vs_elo.png"))
+plot_elo(elo_x, inferior_elo, "Inferior to vs Elo", "Inferior to",
+         os.path.join(PLOTS_BY_ELO, "inferiority_vs_elo.png"))
+plot_elo(elo_x, equivalent_elo, "Equivalent to vs Elo", "Equivalent to",
+         os.path.join(PLOTS_BY_ELO, "equivalent_vs_elo.png"))
 
 print("\nAnalysis complete.")
-print("Plots saved in:")
-print(PLOTS_BY_BOT)
-print(PLOTS_BY_ELO)
+print("Plots saved in:", PLOTS_DATE_DIR)
