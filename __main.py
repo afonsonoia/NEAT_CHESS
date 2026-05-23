@@ -398,8 +398,8 @@ def eval_function_simple(genome, config, champions_arr:list, generation_number:i
         else:
             total_score += BONUS_BOT_WIN_CHAMP
 
-        #if not(won_a_game and not lost_a_game):
-        #    break
+        if not(won_a_game and not lost_a_game):
+            break
 
 
         # FUTURE: add extra bonus for defeating stronger champions - like local_score * 1.01 ** champion_number
