@@ -77,11 +77,11 @@ if not theory_dict:
     first_run = True
 
 
-# fronteiras são listas de fens
-fronteira_nova = []
+# Frontiers are lists of FENs
+new_frontier = []
 
 if theory_dict.getDataBaseDepth() > 0:
-    fronteira_nova = theory_dict.getLastFronteira()
+    new_frontier = theory_dict.getLastFrontier()
 
 reachedNewContent = False
 
@@ -91,20 +91,20 @@ for nm in range(max_n_moves_opening):
     if theory_dict.getDataBaseDepth() >= num_move:
         continue
 
-    fronteira_atual = fronteira_nova
-    fronteira_nova = []
+    current_frontier = new_frontier
+    new_frontier = []
 
     if first_run:
         first_run = False
         board = chess.Board()
-        fronteira_atual = [board.fen()]
-        totalAnalisadas = 0
+        current_frontier = [board.fen()]
+        total_analyzed = 0
 
-    print(f"\n\nStart running move: {num_move} - total: {len(fronteira_atual)} - total pos analisadas: {theory_dict.getNumPosAnalisadas()}\n")
+    print(f"\n\nStart running move: {num_move} - total: {len(current_frontier)} - total analyzed pos: {theory_dict.getNumPosAnalyzed()}\n")
 
     current_level_n_moves_processed = 0
-    for fen in fronteira_atual:
-        old_fronteira_size = len(fronteira_atual)   # para depois inserir nas pos analisadas da DB
+    for fen in current_frontier:
+        old_frontier_size = len(current_frontier)   # to later insert into analyzed positions in DB
 
         cond1 = (not reachedNewContent) and (current_level_n_moves_processed % (10*BACKUP_N_MOVES) == 0) and (not check_continue_file())
         cond2 = reachedNewContent and (not check_continue_file())
@@ -120,16 +120,16 @@ for nm in range(max_n_moves_opening):
         if board.outcome():
             continue
 
-        # check se vale a pena gravar
+        # check if worth saving
         if reachedNewContent and (current_level_n_moves_processed % BACKUP_N_MOVES == 0):
             store_full_dict(theory_dict)
-            print(f"\nMove: {num_move} - Processed: {current_level_n_moves_processed} / {len(fronteira_atual)} - Theory amount:"
-                  f" {theory_dict.getNumPosDB()} Total Analisadas {theory_dict.getNumPosAnalisadas() + current_level_n_moves_processed}")
+            print(f"\nMove: {num_move} - Processed: {current_level_n_moves_processed} / {len(current_frontier)} - Theory amount:"
+                  f" {theory_dict.getNumPosDB()} Total Analyzed {theory_dict.getNumPosAnalyzed() + current_level_n_moves_processed}")
 
         elif not reachedNewContent and (current_level_n_moves_processed % CHECKED_N_MOVES == 0):
-            print(f"Move: {num_move} - Checked {current_level_n_moves_processed} / {len(fronteira_atual)} moves")
+            print(f"Move: {num_move} - Checked {current_level_n_moves_processed} / {len(current_frontier)} moves")
 
-        # tomar decisao e gravar no dicionario (SEM GRAVAR O FICHEIRO)
+        # make decision and store in dictionary (WITHOUT WRITING FILE)
         stockfish_stronger.set_fen_position(fen)
         if not theory_dict.getDictResponse(fen=fen):
             reachedNewContent = True
@@ -137,23 +137,23 @@ for nm in range(max_n_moves_opening):
             theory_dict.insertNew(fen=fen, bestMove=best_move, depth=num_move)
             print(f"{fen.ljust(65)} {best_move}")
 
-        # adicionar a fronteira
+        # add to frontier
         fen = board.fen()
         if num_move <= min_opening_moves:
             for m in board.legal_moves:
                 new_fen = get_fen_from_move(fen, m)
-                fronteira_nova.append(new_fen)
+                new_frontier.append(new_fen)
         else:
             stockfish_weaker.set_fen_position(fen)
             best_n_moves = stockfish_weaker.get_top_moves(num_max_options)
             for sm in best_n_moves:
                 new_fen = get_fen_from_uci(fen, sm['Move'])
-                fronteira_nova.append(new_fen)
+                new_frontier.append(new_fen)
 
-    # aumentar a depth da BD
+    # increase DB depth
     if num_move > theory_dict.getDataBaseDepth():
-        num_analisadas = theory_dict.getNumPosAnalisadas() + len(fronteira_atual)
-        theory_dict.setCompleteDatabaseDepth(num_move, num_analisadas)
+        num_analyzed = theory_dict.getNumPosAnalyzed() + len(current_frontier)
+        theory_dict.setCompleteDatabaseDepth(num_move, num_analyzed)
 
     if reachedNewContent:
         store_full_dict(theory_dict)

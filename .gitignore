@@ -26,3 +26,8 @@ _secure_backups
 
 _pgns_to_merge
 _pgns_to_merge_2
+
+# Data and scratch
+*.puzzle
+human_puzzles/all_files/
+scratch/

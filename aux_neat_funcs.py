@@ -3,8 +3,8 @@ import numpy as np
 
 def get_numeric_board_pawns_calculation(board_str):
     numeric_dic = {
-        'p': 0.1, 'n': 0.32, 'b': 0.333, 'r': 0.51, 'q': 0.92, 'k': 1,
-        'P': -0.1, 'N': -0.32, 'B': -0.333, 'R': -0.51, 'Q': -0.92, 'K': -1
+        'p': -0.1, 'n': -0.32, 'b': -0.333, 'r': -0.51, 'q': -0.92, 'k': -1,
+        'P': 0.1, 'N': 0.32, 'B': 0.333, 'R': 0.51, 'Q': 0.92, 'K': 1
     }
     numeric_board = np.zeros(64)  # Initialize as zeros
     n = 0
@@ -25,8 +25,8 @@ def get_numeric_board_pawns_calculation(board_str):
 
 def get_numeric_board_ai(board_str):
     numeric_dic_v2 = {
-        'p': 0.1, 'n': 0.3, 'b': 0.45, 'r': 0.6, 'q': 0.8, 'k': 1,
-        'P': -0.1, 'N': -0.3, 'B': -0.45, 'R': -0.6, 'Q': -0.8, 'K': -1
+        'p': -0.1, 'n': -0.3, 'b': -0.45, 'r': -0.6, 'q': -0.8, 'k': -1,
+        'P': 0.1, 'N': 0.3, 'B': 0.45, 'R': 0.6, 'Q': 0.8, 'K': 1
     }
     numeric_board = np.zeros(64)  # Initialize as zeros
     n = 0

@@ -1,10 +1,10 @@
 import time
 from aux_neat_funcs import *
 
-LICHESS_TOKEN = 'lip_R8Smg69o2Uproe0Wm21F'
 
 def generateSortValuePuzzlesV2(puzzleV2):
-    numericValue = puzzleV2.dificulty + min(min(puzzleV2.counterTotal, 1000000)/1000, 30)
+    diff = getattr(puzzleV2, 'difficulty', getattr(puzzleV2, 'dificulty', 200))
+    numericValue = diff + min(min(puzzleV2.counterTotal, 1000000)/1000, 30)
     return numericValue
 
 
@@ -40,7 +40,8 @@ class PuzzleV2:
         self.best_moves_list_strs = best_moves_list_strs
         self.counterTotal = 0
         self.counterPassed = 0
-        self.dificulty = 200  # %
+        self.difficulty = 200  # %
+        self.dificulty = 200   # backwards compatibility alias
         self.white = white
         self.depth_checked = depth_checked
 
@@ -61,8 +62,11 @@ class PuzzleV2:
         if correct:
             self.counterPassed += 1
         if self.counterTotal >= 1:    # min games to get diff
-            self.dificulty = round(100 * (1-(self.counterPassed / self.counterTotal)), 2)
+            calc_diff = round(100 * (1-(self.counterPassed / self.counterTotal)), 2)
+            self.difficulty = calc_diff
+            self.dificulty = calc_diff
         else:
+            self.difficulty = 200
             self.dificulty = 200
 
 
@@ -120,10 +124,10 @@ class theoryData:
     def __init__(self, includeAllDepth=6):
         self.completeDatabaseDepth = -1
         self.numPositionsInDB = 0
-        self.numAnalisedPositions = 0
+        self.numAnalyzedPositions = 0
+        self.numAnalisedPositions = 0  # backwards compatibility alias
         self.includeAllDepth = includeAllDepth
         self.theoryDict = {}
-
 
     def getDictResponse(self, fen):
         if fen in self.theoryDict:
@@ -141,19 +145,25 @@ class theoryData:
     def getNumPosDB(self):
         return self.numPositionsInDB
 
-    def getNumPosAnalisadas(self):
-        return self.numAnalisedPositions
+    def getNumPosAnalyzed(self):
+        return getattr(self, 'numAnalyzedPositions', getattr(self, 'numAnalisedPositions', 0))
 
-    def setCompleteDatabaseDepth(self, newDepth, newAmountAnalisadas):
+    def getNumPosAnalisadas(self):
+        """Backwards-compatibility alias for getNumPosAnalyzed."""
+        return self.getNumPosAnalyzed()
+
+    def setCompleteDatabaseDepth(self, newDepth, newAmountAnalyzed):
         if newDepth > self.completeDatabaseDepth:
             self.completeDatabaseDepth = newDepth
         else:
-            print("Erro: depth inserida < ao valor anterior")
+            print("Error: inserted depth < previous value")
 
-        if newAmountAnalisadas > self.numAnalisedPositions:
-            self.numAnalisedPositions = newAmountAnalisadas
+        curr_analyzed = getattr(self, 'numAnalyzedPositions', getattr(self, 'numAnalisedPositions', 0))
+        if newAmountAnalyzed > curr_analyzed:
+            self.numAnalyzedPositions = newAmountAnalyzed
+            self.numAnalisedPositions = newAmountAnalyzed
         else:
-            print("Erro: num de posicoes inseridas < valor anterior")
+            print("Error: number of inserted positions < previous value")
         return
 
     def insertNew(self, fen, bestMove, depth):
@@ -162,35 +172,39 @@ class theoryData:
             self.theoryDict[fen] = newEntry
             self.numPositionsInDB += 1
         else:
-            print("Erro: valor já existe na DB da teoria")
+            print("Error: value already exists in theory DB")
         return
 
     def getBestMove(self, fen):
         return self.theoryDict[fen].getBestMove()
 
-    def getLastFronteira(self):
+    def getLastFrontier(self):
         import chess
 
         display_loading = 10000
 
-        fronteira = []
+        frontier = []
         actual_move = self.completeDatabaseDepth
-        print("\nLoading Last Fronteira...\n")
+        print("\nLoading Last Frontier...\n")
         if actual_move <= self.includeAllDepth:
             for fen in self.theoryDict:
                 board = chess.Board(fen=fen)
                 if self.theoryDict[fen].getDepth() == self.completeDatabaseDepth:
                     for m in board.legal_moves:
                         new_fen = get_fen_from_move(fen, m)
-                        fronteira.append(new_fen)
-                        if len(fronteira) % display_loading == 0:
-                            print(f"imported {len(fronteira)}")
-            print("\nFinished loading Last Fronteira\n\n")
-            return fronteira
+                        frontier.append(new_fen)
+                        if len(frontier) % display_loading == 0:
+                            print(f"imported {len(frontier)}")
+            print("\nFinished loading Last Frontier\n\n")
+            return frontier
 
         else:
             print("incomplete - todo")
             exit()
+
+    def getLastFronteira(self):
+        """Backwards-compatibility alias for getLastFrontier."""
+        return self.getLastFrontier()
 
 
 class Bot:
@@ -200,10 +214,11 @@ class Bot:
         self.net = net
         self.genome = genome
         self.config = config
-        self.elo = 10.0             # Elo inicial de 10
+        self.elo = 10.0             # Initial Elo of 10
         self.num_games_played = 0
         self.is_champion = False
         self.champ_num = None
+        self.record_champs = [0, 0, 0]
 
         # self.mem_hit_miss = [0, 0]
         # self.max_memory_storage = 50000
@@ -223,40 +238,41 @@ class Bot:
         best_move = [None, -999999]  # [move, points]
         outputs_debug = []
 
-        legal_moves = []
-        for lm in board.legal_moves:
-            legal_moves.append(lm)
+        legal_moves = list(board.legal_moves)
+        if not legal_moves:
+            return None
 
-        # random.shuffle(legal_moves)
+        best_move = [legal_moves[0], -999999.0]  # [move, points]
+        outputs_debug = []
+
         for m in legal_moves:
             board.push(m)
 
-            # if outcome for this move:
-            if board.outcome() is not None:
-                board.pop()
-                return m
-
-            # NOTA: Assume que get_numeric_board_ai está definida/importada
-            # Esta função precisa de estar disponível.
-            # ex: from teu_ficheiro_utils import get_numeric_board_ai
-            bot_input = get_numeric_board_ai(board_str=board.__str__())
-            response_bot = self.net.activate(bot_input)[0]  # running NN
-
-            # A NN dá uma pontuação da perspetiva das Brancas.
-            # Multiplicamos por my_color (1 para Brancas, -1 para Pretas)
-            # para obter a pontuação da perspetiva do bot.
-            response_bot *= my_color
+            outcome = board.outcome()
+            if outcome is not None:
+                # If it's a win for the bot, play immediately!
+                if (outcome.winner is True and my_color == 1) or (outcome.winner is False and my_color == -1):
+                    board.pop()
+                    return m
+                elif (outcome.winner is False and my_color == 1) or (outcome.winner is True and my_color == -1):
+                    points = -99999.0
+                else:  # Draw (stalemate, repetition, etc.)
+                    points = 0.0
+            else:
+                bot_input = get_numeric_board_ai(board_str=board.__str__())
+                response_bot = self.net.activate(bot_input)[0]  # running NN
+                response_bot *= my_color
+                points = response_bot
 
             if DEBUG_MODE:
                 print(bot_input)
-                print(response_bot)
+                print(points)
 
-            if not (isinstance(response_bot, float) or isinstance(response_bot, int)):
+            if not (isinstance(points, float) or isinstance(points, int)):
                 print("Weird Error")
-                print(response_bot)
+                print(points)
                 exit()
 
-            points = response_bot
             outputs_debug.append(points)
             if points > best_move[1]:
                 best_move[0] = m
@@ -266,28 +282,28 @@ class Bot:
         return best_move[0]
 
 
-    # Esta função é necessária para a pesquisa alpha-beta.
-    # Retorna a avaliação estática de um tabuleiro *sem* pesquisar.
+    # This function is required for alpha-beta search.
+    # Returns the static evaluation of a board *without* searching.
     def _get_static_eval(self, board, my_color):
         """
-        Obtém a avaliação estática da NN para o estado *atual* do tabuleiro,
-        da perspetiva da cor do bot.
+        Gets the static NN evaluation for the *current* board state,
+        from the perspective of the bot's color.
         """
         outcome = board.outcome()
         if outcome:
-            # Jogo terminado, retorna pontuação de vitória/derrota/empate
-            if outcome.winner is True:  # Brancas ganham
+            # Game over: return win/loss/draw score
+            if outcome.winner is True:  # White wins
                 return float('inf') if my_color == 1 else float('-inf')
-            elif outcome.winner is False:  # Pretas ganham
+            elif outcome.winner is False:  # Black wins
                 return float('-inf') if my_color == 1 else float('inf')
-            else:  # Empate
+            else:  # Draw
                 return 0
 
-        # NOTA: Assume que get_numeric_board_ai está definida/importada
+        # Note: assumes get_numeric_board_ai is defined/imported
         bot_input = get_numeric_board_ai(board_str=board.__str__())
-        response_bot = self.net.activate(bot_input)[0]  # NN dá pontuação da POV das Brancas
+        response_bot = self.net.activate(bot_input)[0]  # NN gives score from White's POV
 
-        # Converte pontuação para a perspetiva do bot
+        # Convert score to bot's perspective
         response_bot *= my_color
 
         return response_bot
@@ -295,34 +311,31 @@ class Bot:
 
     def make_decision_depth(self, board, my_color, depth):
         """
-        Usa poda alpha-beta para procurar a melhor jogada até à profundidade especificada.
+        Uses alpha-beta pruning to search for the best move up to the specified depth.
 
-        Parâmetros:
-            board: a instância atual de chess.Board.
-            my_color: a cor do bot (1 para brancas, -1 para pretas).
-            depth: profundidade da pesquisa.
+        Parameters:
+            board: current chess.Board instance.
+            my_color: bot's color (1 for White, -1 for Black).
+            depth: search depth.
 
-        Retorna:
-            A chess.Move selecionada.
+        Returns:
+            The selected chess.Move.
         """
 
-        # Profundidade 1 é uma pesquisa de 1-ply, que make_decision já faz.
+        # Depth 1 is a 1-ply search, which make_decision already performs.
         if depth <= 1:
             return self.make_decision(board, my_color)
 
         def alpha_beta(b, d, alpha, beta):
-            # Condição terminal: profundidade atingida ou fim de jogo.
+            # Terminal condition: depth reached or game over.
             if d == 0 or b.is_game_over():
-                # --- ESTA É A CORREÇÃO ---
-                # Em vez de chamar make_decision (que retorna uma jogada),
-                # chamamos a nossa nova função helper que retorna uma pontuação.
                 return self._get_static_eval(b, my_color)
 
-            # Determina se é a vez do bot.
+            # Determine if it's the bot's turn.
             is_bot_turn = (b.turn and my_color == 1) or (not b.turn and my_color == -1)
 
             if is_bot_turn:
-                # Vez do Bot: Maximiza a sua própria pontuação
+                # Bot's turn: Maximize its own score
                 value = -float('inf')
                 for move in b.legal_moves:
                     b.push(move)
@@ -330,10 +343,10 @@ class Bot:
                     b.pop()
                     alpha = max(alpha, value)
                     if beta <= alpha:
-                        break  # Corte Beta
+                        break  # Beta cut-off
                 return value
             else:
-                # Vez do Oponente: Minimiza a pontuação do bot
+                # Opponent's turn: Minimize bot's score
                 value = float('inf')
                 for move in b.legal_moves:
                     b.push(move)
@@ -341,18 +354,21 @@ class Bot:
                     b.pop()
                     beta = min(beta, value)
                     if beta <= alpha:
-                        break  # Corte Alpha
+                        break  # Alpha cut-off
                 return value
 
-        best_move = None
-        best_value = -float('inf')  # Bot quer sempre maximizar
+        legal_moves = list(board.legal_moves)
+        if not legal_moves:
+            return None
+
+        best_move = legal_moves[0]
+        best_value = -float('inf')  # Bot always wants to maximize
         alpha = -float('inf')
         beta = float('inf')
 
-        # NOTA: Idealmente, deves ordenar as jogadas (ex: capturas primeiro)
-        # para que a poda alpha-beta seja mais eficiente.
+        # Note: ideally order moves (e.g. captures first) for efficient alpha-beta pruning.
 
-        for move in board.legal_moves:
+        for move in legal_moves:
             board.push(move)
             value = alpha_beta(board, depth - 1, alpha, beta)
             board.pop()

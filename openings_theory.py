@@ -39,14 +39,14 @@ def theory_opening(board):
 def check_if_in_dict(dict_to_check):
     dict_new_moves = {}
     dict_old_moves = {}
-    nums_inseridos = [0, 0]
+    inserted_counts = [0, 0]
 
     for fen in dict_to_check:
         if fen == 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq':     # ignore
             continue
         if get_full_dict_response(fen) is None:
             dict_new_moves[fen] = dict_to_check[fen]
-            nums_inseridos[0] += 1
+            inserted_counts[0] += 1
         else:
             response = get_full_dict_response(fen)
             if isinstance(response, str) and (dict_to_check[fen] == response):
@@ -55,7 +55,7 @@ def check_if_in_dict(dict_to_check):
                 continue
             else:
                 dict_old_moves[fen] = dict_to_check[fen]
-                nums_inseridos[1] += 1
+                inserted_counts[1] += 1
 
 
     print()
@@ -68,7 +68,7 @@ def check_if_in_dict(dict_to_check):
         for fen in dict_old_moves:
             print(fen)
 
-    print(f"\n\n\nnew moves = {nums_inseridos[0]}/{nums_inseridos[0] + nums_inseridos[1]}")
+    print(f"\n\n\nnew moves = {inserted_counts[0]}/{inserted_counts[0] + inserted_counts[1]}")
 
 
 

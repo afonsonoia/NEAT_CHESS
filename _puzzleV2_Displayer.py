@@ -42,7 +42,7 @@ while not sucess_read:
 
 
 for puzzle in puzzles_arrV2:
-    #print(f"{puzzle.get_fen().ljust(80)} - {puzzle.get_best_move_str()} - depth: {puzzle.depth_checked} - counter total: {puzzle.counterTotal} - passed: {puzzle.counterPassed} - diff: {puzzle.dificulty}")
+    #print(f"{puzzle.get_fen().ljust(80)} - {puzzle.get_best_move_str()} - depth: {puzzle.depth_checked} - counter total: {puzzle.counterTotal} - passed: {puzzle.counterPassed} - diff: {puzzle.difficulty}")
     if str(puzzle.depth_checked) not in amount_by_depth:
         amount_by_depth[str(puzzle.depth_checked)] = 1
     else:
@@ -69,16 +69,18 @@ count_total_tests = 0
 
 
 for puzzle in puzzles_arrV2:
+    diff_val = getattr(puzzle, 'difficulty', getattr(puzzle, 'dificulty', 200))
     if display_diff_full:
-        print(f"{puzzle.get_fen().ljust(100)} - diff: {puzzle.counterPassed} / {puzzle.counterTotal} ({puzzle.dificulty}) ")
+        print(f"{puzzle.get_fen().ljust(100)} - diff: {puzzle.counterPassed} / {puzzle.counterTotal} ({diff_val}) ")
     count_total_tests += puzzle.counterTotal
-print("\nTotal atempts:", count_total_tests, "\n\n")
+print("\nTotal attempts:", count_total_tests, "\n\n")
 if display_diff_partial:
     counter = 0
     for puzzle in puzzles_arrV2:
+        diff_val = getattr(puzzle, 'difficulty', getattr(puzzle, 'dificulty', 200))
         counter += 1
         count_total_tests += puzzle.counterTotal
         if counter%divisior == 0:
-            print(f"{counter}: {puzzle.get_fen().ljust(100)} - diff: {puzzle.counterPassed} / {puzzle.counterTotal} ({puzzle.dificulty})")
+            print(f"{counter}: {puzzle.get_fen().ljust(100)} - diff: {puzzle.counterPassed} / {puzzle.counterTotal} ({diff_val})")
 
 time.sleep(90)

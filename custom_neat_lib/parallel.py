@@ -57,14 +57,16 @@ class ParallelEvaluator(object):
             jobs.append(self.pool.apply_async(self.eval_function, (genome, config, arr_champions, generation_number)))
 
         new_champion = None
+        best_champ_fitness = -float('inf')
         for job, (ignored_genome_id, genome) in zip(jobs, genomes):
             arr_outputs = job.get(timeout=self.timeout)
             if arr_outputs is None:
                 genome.fitness = -1
             else:
                 genome.fitness = arr_outputs[0]
-                if arr_outputs[1]:
+                if arr_outputs[1] and genome.fitness > best_champ_fitness:
                     new_champion = arr_outputs[1]
+                    best_champ_fitness = genome.fitness
 
         # --- Save new champion and reorder leaderboard ---
         if new_champion:

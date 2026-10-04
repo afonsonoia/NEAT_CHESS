@@ -3,7 +3,7 @@ import os
 import pickle
 
 # Total number of bots (0 through 115 inclusive)
-BOT_NUMBER = 22
+BOT_NUMBER = 48
 path_champions = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
 
 # Load all bots

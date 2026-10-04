@@ -19,8 +19,8 @@ if __name__ == '__main__':
     delays_night = 2
 
     MAX_MOVES_MATE_PUZZLES = 40
-    DEPTH_stockfish = 22
-    min_depth = 22
+    DEPTH_stockfish = 24
+    min_depth = 24
 
     decrement_depth = 2
 

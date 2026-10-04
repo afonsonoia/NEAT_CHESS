@@ -6,7 +6,7 @@ import re
 
 def get_pgn_at_index(filename, index, content=None):
     if content is None:
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             content = file.read()
 
     # Split the content into individual games using double newline characters
@@ -39,7 +39,7 @@ def get_pgn_header_at_index(filename, index, content=None):
 
 
 def get_games_headers_arr(filename):
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.read()
 
     # Split the content into individual games using double newline characters
@@ -49,7 +49,7 @@ def get_games_headers_arr(filename):
 
 
 def count_games(filename):
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.read()
 
     # Split the content into individual games using double newline characters

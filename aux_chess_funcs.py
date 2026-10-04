@@ -1,19 +1,19 @@
 
 def convert_chess_notation_to_sq_number(notation):
-    num_inicial = 0
-    num_final = 0
+    start_sq = 0
+    end_sq = 0
     if len(notation) == 4:
-        num_inicial = ord(notation[0]) - 97
-        num_inicial += (int(notation[1]) - 1) * 8
-        num_final = ord(notation[2]) - 97
-        num_final += (int(notation[3]) - 1) * 8
-        return [num_inicial, num_final]
+        start_sq = ord(notation[0]) - 97
+        start_sq += (int(notation[1]) - 1) * 8
+        end_sq = ord(notation[2]) - 97
+        end_sq += (int(notation[3]) - 1) * 8
+        return [start_sq, end_sq]
     elif len(notation) == 5:
-        num_inicial = ord(notation[0]) - 97
-        num_inicial += (int(notation[1]) - 1) * 8
-        num_final = ord(notation[2]) - 97
-        num_final += (int(notation[3]) - 1) * 8
-        return [num_inicial, num_final, notation[4]]
+        start_sq = ord(notation[0]) - 97
+        start_sq += (int(notation[1]) - 1) * 8
+        end_sq = ord(notation[2]) - 97
+        end_sq += (int(notation[3]) - 1) * 8
+        return [start_sq, end_sq, notation[4]]
 
 
 def get_all_legal_moves(board):

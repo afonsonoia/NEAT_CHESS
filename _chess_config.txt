@@ -12,9 +12,9 @@ reset_on_extinction   = 0
 
 [DefaultGenome]
 num_inputs              = 64
-num_hidden              = 12
+num_hidden              = 10
 num_outputs             = 1
-initial_connection      = partial_nodirect 0.9
+initial_connection      = partial_nodirect 0.7
 feed_forward            = True
 
 compatibility_disjoint_coefficient    = 1.0
@@ -29,8 +29,8 @@ activation_default      = relu
 activation_options      = relu
 activation_mutate_rate  = 0.00001
 
-aggregation_default     = softmax
-aggregation_options     = softmax
+aggregation_default     = sum
+aggregation_options     = sum
 aggregation_mutate_rate = 0.00001
 
 bias_init_mean          = 0.2
@@ -64,7 +64,7 @@ enabled_default         = True
 enabled_mutate_rate     = 0.0002
 
 [DefaultSpeciesSet]
-compatibility_threshold = 4.0
+compatibility_threshold = 5.0
 
 [DefaultStagnation]
 species_fitness_func = max

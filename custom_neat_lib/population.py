@@ -151,7 +151,7 @@ class Population(object):
                 #subprocess.run(['python', puzzle_filter_path])
 
 
-            AMOUNT_SPECIES_WANTED = 2.5
+            AMOUNT_SPECIES_WANTED = 7.0
             INCREMENT = 0.03
             ROUND_POINTS = 3
 

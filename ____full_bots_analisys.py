@@ -6,7 +6,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 # ================= CONFIG =================
-BOT_NUMBER = 5
+BOT_NUMBER = 25
 
 CHAMPIONS_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
 ELO_PATH = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\leaderboard_elo.txt"

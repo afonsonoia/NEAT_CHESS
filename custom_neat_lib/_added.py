@@ -1,7 +1,8 @@
 
 
 def generateSortValuePuzzlesV2(puzzleV2):
-    numericValue = puzzleV2.dificulty + min(min(puzzleV2.counterTotal, 1000000)/1000, 30)
+    diff = getattr(puzzleV2, 'difficulty', getattr(puzzleV2, 'dificulty', 200))
+    numericValue = diff + min(min(puzzleV2.counterTotal, 1000000)/1000, 30)
     return numericValue
 
 
@@ -51,8 +52,10 @@ def save_files_secure_backups():
 
 def update_puzzles_diff():
     import os
+    import pickle
+    from classes import generateSortValuePuzzlesV2
 
-    original_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\puzzles_generated.puzzle'
+    original_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\human_puzzles\human_moves_stream.puzzle'
     partials_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\__puzzles_results'
 
     # Get a list of all file names in the folder (exclude directories)
@@ -64,15 +67,22 @@ def update_puzzles_diff():
     else:
         print("Updating puzzles diff")
 
-    all_puzzles = getPickleData(original_path)
+    # --- Read stream format (puzzle by puzzle) into a list ---
+    all_puzzles = []
+    with open(original_path, 'rb') as f:
+        while True:
+            try:
+                all_puzzles.append(pickle.load(f))
+            except EOFError:
+                break
 
-    # fen -> [certos, errados]
+    # fen -> [correct, wrong]
     all_results = {}
 
     # extract results content from files
     for filename in file_names:
         path_file = os.path.join(partials_path, filename)
-        results = getPickleData(path_file)
+        results = getPickleData(path_file)  # Kept because results were saved normally
         for fen in results:
             if results[fen] == 1:
                 if fen in all_results:
@@ -99,14 +109,17 @@ def update_puzzles_diff():
             # total wins
             all_puzzles[i].counterPassed += all_results[all_puzzles[i].get_fen()][0]
 
-            # trick to update dificulty
+            # trick to update difficulty
             all_puzzles[i].counterTotal -= 1
             all_puzzles[i].count(False)
 
     # sort puzzles
     all_puzzles.sort(key=generateSortValuePuzzlesV2)
 
-    # update main file
-    savePickleData(original_path, all_puzzles)
+    # --- Write back in stream format to prevent excessive RAM usage ---
+    with open(original_path, 'wb') as f:
+        for p in all_puzzles:
+            pickle.dump(p, f)
+
     print("Finished updating puzzles diff")
 

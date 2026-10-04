@@ -12,13 +12,13 @@ def update_puzzlesV2_file(puzzlesV2_arr):
     pickle.dump(puzzlesV2_arr, puzzles_file)
     puzzles_file.close()
 
-sucess_read = False
-while not sucess_read:
+success_read = False
+while not success_read:
     try:
         puzzles_file = open(puzzles_file_path, 'rb')
         puzzles_arrV2 = pickle.load(puzzles_file)
         puzzles_file.close()
-        sucess_read = True
+        success_read = True
     except:
         time.sleep(random.random()*1)
 
@@ -28,7 +28,8 @@ for puzzle in puzzles_arrV2:
     new_puzzle = puzzle
     new_puzzle.counterTotal = 0
     new_puzzle.counterPassed = 0
-    new_puzzle.dificulty = 200  # %
+    new_puzzle.difficulty = 200  # %
+    new_puzzle.dificulty = 200
     new_puzzlesV2.append(new_puzzle)
 
 random.shuffle(new_puzzlesV2)

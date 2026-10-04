@@ -16,7 +16,7 @@ def full_reset():
         time.sleep(1)
 
 
-    # ----- APAGAR TUDO -----
+    # ----- DELETE ALL -----
 
     # BACKUPS
     f_names = os.listdir(backups_paths)
