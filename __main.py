@@ -331,20 +331,24 @@ def eval_function_simple(genome, config, champions_arr: list, generation_number:
         return [float(total_score), None]
 
 
+# --- PUZZLE EVALUATION TOGGLE ---
+# Set to True to re-enable puzzle evaluations alongside bot games.
+# When False, training evaluates purely via games between bots and champions,
+# without requiring the aux_files folder or puzzle binaries.
+ENABLE_PUZZLES = False
+
+
 def eval_function(genome, config, champions_arr, generation_number: int):
-    games_results = [0, 0]
-    score = 0
-    puzzle_base_score = 0.1
-    puzzle_attempts = math.log2(max(generation_number, 1))
-    num_puzzles_sucess = eval_func_puzzles(genome, config, int(puzzle_attempts), generation_number)
+    score = 0.0
 
-    score += (num_puzzles_sucess * puzzle_base_score)
+    if ENABLE_PUZZLES:
+        puzzle_base_score = 0.1
+        puzzle_attempts = math.log2(max(generation_number, 1))
+        num_puzzles_sucess = eval_func_puzzles(genome, config, int(puzzle_attempts), generation_number)
+        score += (num_puzzles_sucess * puzzle_base_score)
+
     games_results = eval_function_simple(genome, config, champions_arr, generation_number)
-
-    if games_results[0] > 1:
-        score += float(games_results[0]*0.5)
-    else:
-        score += float(games_results[0]*0.5)
+    score += float(games_results[0])
 
     return [float(score), games_results[1]]
 

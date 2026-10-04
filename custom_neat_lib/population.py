@@ -132,32 +132,34 @@ class Population(object):
 
 
             # -------- chess advancements --------
+            # Set to True to re-enable puzzle diff updates and background puzzle generation
+            ENABLE_PUZZLE_ADVANCEMENTS = False
 
-            # --- puzzle diff update ---
-            update_puzzles_diff()
+            if ENABLE_PUZZLE_ADVANCEMENTS:
+                # --- puzzle diff update ---
+                update_puzzles_diff()
 
-            # - custom puzzles -
+                # - custom puzzles -
+                puzzle_generator_path = '__puzzle_generator_V2_PGN.py'
+                puzzle_filter_path = '__puzzleV2_FILTER.py'
+                if not os.path.isfile(puzzle_generator_path):
+                    root_gen = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzle_generator_V2_PGN.py')
+                    if os.path.isfile(root_gen):
+                        puzzle_generator_path = os.path.relpath(root_gen)
+                if not os.path.isfile(puzzle_filter_path):
+                    root_fil = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzleV2_FILTER.py')
+                    if os.path.isfile(root_fil):
+                        puzzle_filter_path = os.path.relpath(root_fil)
 
-            puzzle_generator_path = '__puzzle_generator_V2_PGN.py'
-            puzzle_filter_path = '__puzzleV2_FILTER.py'
-            if not os.path.isfile(puzzle_generator_path):
-                root_gen = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzle_generator_V2_PGN.py')
-                if os.path.isfile(root_gen):
-                    puzzle_generator_path = os.path.relpath(root_gen)
-            if not os.path.isfile(puzzle_filter_path):
-                root_fil = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzleV2_FILTER.py')
-                if os.path.isfile(root_fil):
-                    puzzle_filter_path = os.path.relpath(root_fil)
+                if self.generation % 50 == 0 and self.generation > 0:
+                    from custom_neat_lib.puzzles_pgn_handler import merge_pgns
+                    merge_pgns("nn")
 
-            if self.generation%50 == 0 and self.generation > 0:
-                from custom_neat_lib.puzzles_pgn_handler import merge_pgns
-                merge_pgns("nn")
+                    # run puzzle generator
+                    subprocess.run([sys.executable, puzzle_generator_path])
 
-                # run puzzle generator
-                subprocess.run([sys.executable, puzzle_generator_path])
-
-                # run puzzle filter
-                #subprocess.run([sys.executable, puzzle_filter_path])
+                    # run puzzle filter
+                    # subprocess.run([sys.executable, puzzle_filter_path])
 
 
             AMOUNT_SPECIES_WANTED = 7.0
