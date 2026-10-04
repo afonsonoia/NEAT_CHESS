@@ -1,7 +1,7 @@
 if __name__ == '__main__':
 
     from aux_PGN_reader import get_pgn_at_index, count_games, get_full_paths_in_folder
-    import os.path
+    import os
     from classes import PuzzleV2, generateSortValuePuzzlesV2
     import chess.pgn
     import pickle
@@ -46,6 +46,8 @@ if __name__ == '__main__':
     pgn_folder_path = os.path.join(BASE_DIR, 'aux_files', '_pgns_database')
     engine_path = os.path.join(BASE_DIR, 'stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
     processed_moves_path = os.path.join(BASE_DIR, 'aux_files', 'processed_moves.fens')
+    os.makedirs(os.path.join(BASE_DIR, 'aux_files'), exist_ok=True)
+    os.makedirs(pgn_folder_path, exist_ok=True)
 
     puzzles_arr = []
     num_games = 0

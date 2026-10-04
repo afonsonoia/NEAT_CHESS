@@ -24,6 +24,7 @@ def remove_puzzle_by_fen(arr_puzzlesV2, fen):
 
 
 def update_puzzlesV2_file(puzzlesV2_arr):
+    os.makedirs(os.path.dirname(puzzles_file_path), exist_ok=True)
     puzzles_file = open(puzzles_file_path, "wb")
     pickle.dump(puzzlesV2_arr, puzzles_file)
     puzzles_file.close()

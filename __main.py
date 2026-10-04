@@ -211,6 +211,7 @@ def aux_single_game(bot1, bot2, record_game: bool, alt_record_path=False):
             name_file = "human_game_" + num_game + ".pgn"
         else:
             name_file = "nn_" + num_game + ".pgn"
+        os.makedirs(path_records, exist_ok=True)
         path_file = join(path_records, name_file)
 
         with open(path_file, "w", encoding="utf-8") as f:
@@ -335,8 +336,16 @@ if __name__ == "__main__":
     local_dir = os.path.dirname(os.path.abspath(__file__))
     path_champions = os.path.join(local_dir, "champions")
     partial_puzzles_files = os.path.join(local_dir, "aux_files", "__puzzles_results")
+    backups_folder = os.path.join(local_dir, "backups")
     CONTINUE_FROM_CHECKPOINT = True
     MAX_NUM_GENERATIONS = -1
+
+    # Ensure all runtime directories exist on clean checkout
+    os.makedirs(path_champions, exist_ok=True)
+    os.makedirs(partial_puzzles_files, exist_ok=True)
+    os.makedirs(backups_folder, exist_ok=True)
+    os.makedirs(os.path.join(local_dir, "_pgns_to_merge"), exist_ok=True)
+    os.makedirs(os.path.join(local_dir, "_pgns_to_merge_2"), exist_ok=True)
 
     config_path = os.path.join(local_dir, '_chess_config.txt')
     config = custom_neat_lib.Config(custom_neat_lib.DefaultGenome, custom_neat_lib.DefaultReproduction, custom_neat_lib.DefaultSpeciesSet,
@@ -382,6 +391,7 @@ if __name__ == "__main__":
     else:
         winner = pop.run(pe.evaluate)
 
-    with open('chess_winner', 'wb') as f:
+    winner_save_path = os.path.join(local_dir, 'chess_winner')
+    with open(winner_save_path, 'wb') as f:
         pickle.dump(winner, f)
     print(winner)

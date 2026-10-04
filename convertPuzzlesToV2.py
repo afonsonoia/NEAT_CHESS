@@ -7,6 +7,10 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
+if not os.path.isfile(puzzles_file_path):
+    print("No puzzles file found at:", puzzles_file_path)
+    exit()
+
 puzzles_file = open(puzzles_file_path, 'rb')
 puzzles_arr = pickle.load(puzzles_file)
 puzzles_file.close()

@@ -8,7 +8,7 @@ def runStockfish(stockfish, fen, nmoves):
     return top_stockfish_moves
 
 
-import os.path
+import os
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from classes import PuzzleV2, generateSortValuePuzzlesV2
 import chess.pgn

@@ -10,6 +10,9 @@ from aux_funcs_random import create_continue_file, check_continue_file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
+if not os.path.isfile(puzzles_file_path):
+    print(f"No puzzles file found at: {puzzles_file_path}")
+    exit()
 
 def update_puzzlesV2_file(puzzlesV2_arr):
     puzzles_file = open(puzzles_file_path, "wb")

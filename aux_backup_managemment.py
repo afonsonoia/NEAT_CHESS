@@ -7,7 +7,8 @@ def get_last_backup_path(folder_path=BACKUP_FOLDER):
     import re
 
     if not os.path.exists(folder_path):
-        raise FileNotFoundError(f"The folder_path '{folder_path}' does not exist.")
+        os.makedirs(folder_path, exist_ok=True)
+        return None
 
     # List all files in the folder_path
     dir_list = os.listdir(folder_path)

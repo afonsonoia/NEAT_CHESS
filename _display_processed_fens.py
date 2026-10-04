@@ -1,5 +1,5 @@
 from aux_PGN_reader import get_pgn_at_index, count_games, get_full_paths_in_folder
-import os.path
+import os
 from classes import PuzzleV2, generateSortValuePuzzlesV2
 import chess.pgn
 import pickle

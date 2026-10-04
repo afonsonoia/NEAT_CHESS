@@ -1,4 +1,5 @@
 import time
+import os
 from stockfish import Stockfish
 import chess
 import classes

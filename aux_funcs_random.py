@@ -39,7 +39,11 @@ def getPickleData(path):
 
 
 def savePickleData(path, data_to_save):
+    import os
     import pickle
+    dirname = os.path.dirname(path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
     with open(path, 'wb') as file:
         pickle.dump(data_to_save, file)
     return

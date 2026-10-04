@@ -6,6 +6,12 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 input_puzzle_path = os.path.join(base_dir, 'human_puzzles', 'human_moves.puzzle')
 output_puzzle_path = os.path.join(base_dir, 'human_puzzles', 'human_moves_stream.puzzle')
 
+if not os.path.isfile(input_puzzle_path):
+    print(f"Input puzzle file not found at: {input_puzzle_path}")
+    exit()
+
+os.makedirs(os.path.dirname(output_puzzle_path), exist_ok=True)
+
 print("1. Loading large file into RAM (this may take a while)...")
 with open(input_puzzle_path, 'rb') as f:
     large_puzzle_list = pickle.load(f)

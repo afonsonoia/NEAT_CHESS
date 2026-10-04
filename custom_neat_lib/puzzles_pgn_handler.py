@@ -8,6 +8,8 @@ def merge_pgns(name):
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     basePathInput = os.path.join(project_root, '_pgns_to_merge')
     basePathOutput = os.path.join(project_root, 'aux_files', '_pgns_database')
+    os.makedirs(basePathInput, exist_ok=True)
+    os.makedirs(basePathOutput, exist_ok=True)
     filename_output = name + ".pgn"
 
     input_file_path = basePathInput

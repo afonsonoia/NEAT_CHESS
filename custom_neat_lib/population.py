@@ -1,7 +1,8 @@
 """Implements the core evolution algorithm."""
 from __future__ import print_function
 
-import os.path
+import os
+import sys
 import subprocess
 from custom_neat_lib.reporting import ReporterSet
 from custom_neat_lib.math_util import mean, oscillator

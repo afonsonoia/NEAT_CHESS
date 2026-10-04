@@ -1,7 +1,7 @@
 import chess
 import customtkinter
 import pickle
-import os.path
+import os
 import pyperclip
 
 contador = 0

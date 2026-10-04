@@ -41,6 +41,7 @@ class ParallelEvaluator(object):
         arr_champions = []
         aux_files_arr = []
 
+        os.makedirs(champions_path, exist_ok=True)
         for filename in os.listdir(champions_path):
             match = re.match(r'champ_(\d+)\.pickle', filename)
             if match:
@@ -153,6 +154,7 @@ class ParallelEvaluator(object):
     def _load_bots(self, reset_tournament_records=False):
         """Loads all bots and initializes Elo attributes if they don't exist."""
         self.all_bots = []
+        os.makedirs(self.champions_path, exist_ok=True)
         files = [f for f in os.listdir(self.champions_path) if f.startswith("champ_") and f.endswith(".pickle")]
         files = sorted(files, key=lambda x: int(x.split("_")[1].split(".")[0]))
 

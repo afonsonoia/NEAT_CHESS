@@ -4,6 +4,7 @@ from __future__ import print_function
 import gzip
 import random
 import time
+import os
 
 try:
     import cPickle as pickle # pylint: disable=import-error
@@ -64,6 +65,9 @@ class Checkpointer(BaseReporter):
         """ Save the current simulation state. """
         filename = '{0}{1}'.format(self.filename_prefix,generation)
         print("Saving checkpoint to {0}".format(filename))
+        dirname = os.path.dirname(filename)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
 
         with gzip.open(filename, 'w', compresslevel=5) as f:
             data = (generation, config, population, species_set, random.getstate())

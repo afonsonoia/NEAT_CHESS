@@ -7,14 +7,16 @@ import random
 from aux_chess_funcs import get_all_legal_moves_raw
 from classes import Bot
 
+local_dir = os.path.dirname(os.path.abspath(__file__))
+winner_path = os.path.join(local_dir, 'chess_winner')
+
 # load the winner
-with open('chess_winner', 'rb') as f:
+with open(winner_path, 'rb') as f:
     genome = pickle.load(f)
 
 
 # Load the config file, which is assumed to live in
 # the same directory as this script.
-local_dir = os.path.dirname(__file__)
 config_path = os.path.join(local_dir, '_chess_config.txt')
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                      neat.DefaultSpeciesSet, neat.DefaultStagnation,

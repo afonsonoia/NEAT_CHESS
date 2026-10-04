@@ -30,7 +30,11 @@ def getPickleData(path):
 
 
 def savePickleData(path, data_to_save):
+    import os
     import pickle
+    dirname = os.path.dirname(path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
     with open(path, 'wb') as file:
         pickle.dump(data_to_save, file)
     return
@@ -41,6 +45,7 @@ def save_files_secure_backups():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     original_path = os.path.join(project_root, 'aux_files')
     secure_backups_path = os.path.join(project_root, '_secure_backups', 'auto puzzles')
+    os.makedirs(original_path, exist_ok=True)
     os.makedirs(secure_backups_path, exist_ok=True)
 
     files_to_copy = [r'processed_moves.fens', r'puzzles_generated.puzzle']
@@ -59,7 +64,10 @@ def update_puzzles_diff():
     from classes import generateSortValuePuzzlesV2
 
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    original_path = os.path.join(project_root, 'human_puzzles', 'human_moves_stream.puzzle')
+    original_path = os.path.join(project_root, 'human_puzzles', 'all_files', 'twic_and_gms.puzzle')
+    if not os.path.isfile(original_path):
+        original_path = os.path.join(project_root, 'human_puzzles', 'human_moves_stream.puzzle')
+
     partials_path = os.path.join(project_root, 'aux_files', '__puzzles_results')
     os.makedirs(partials_path, exist_ok=True)
 
@@ -71,6 +79,10 @@ def update_puzzles_diff():
         return
     else:
         print("Updating puzzles diff")
+
+    if not os.path.isfile(original_path):
+        print(f"Warning: Puzzle file not found at {original_path}. Skipping puzzle diff update.")
+        return
 
     # --- Read stream format (puzzle by puzzle) into a list ---
     all_puzzles = []
