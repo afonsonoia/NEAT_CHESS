@@ -23,6 +23,28 @@ def get_numeric_board_pawns_calculation(board_str):
     return numeric_board
 
 
+def get_numeric_board_ai_64(board_str):
+    numeric_dic_v2 = {
+        'p': -0.1, 'n': -0.3, 'b': -0.45, 'r': -0.6, 'q': -0.8, 'k': -1,
+        'P': 0.1, 'N': 0.3, 'B': 0.45, 'R': 0.6, 'Q': 0.8, 'K': 1
+    }
+    numeric_board = np.zeros(64, dtype=float)  # Initialize as zeros
+    n = 0
+    for k in board_str:
+        if k == '\n' or k == ' ':
+            continue
+        if k == '.':
+            numeric_board[n] = 0.0
+        else:
+            piece = numeric_dic_v2[k]
+            numeric_board[n] = piece
+        n += 1
+        if n >= 64:  # Break loop if we reach the end of the board
+            break
+
+    return numeric_board
+
+
 # 12 piece planes (6 white, 6 black) x 64 squares = 768 binary inputs
 PIECE_PLANE_INDICES = {
     'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
@@ -37,7 +59,7 @@ def get_numeric_board_ai(board_str=None, board=None):
     Planes 6 to 11: Black pieces (p, n, b, r, q, k)
     Accepts board_str (string) or board (chess.Board).
     """
-    numeric_board = np.zeros(768, dtype=np.float32)
+    numeric_board = np.zeros(768, dtype=float)
 
     if board is not None or (board_str is not None and not isinstance(board_str, str) and hasattr(board_str, 'piece_at')):
         b = board if board is not None else board_str

@@ -79,4 +79,4 @@ with open(output_file, "w") as f:
                 f"Games: {record['games']}\n")
         f.write(line)
 
-print(f"\n✅ Leaderboard saved to {output_file}")
+print(f"\n[+] Leaderboard saved to {output_file}")

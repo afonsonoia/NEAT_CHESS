@@ -200,7 +200,7 @@ class ParallelEvaluator(object):
             for rank, (bot_id, elo, games) in enumerate(leaderboard, start=1):
                 f.write(f"{rank}. champ{bot_id} | Elo: {elo:.2f} (Games: {games})\n")
 
-        print(f"\n✅ Elo Leaderboard saved to {output_file}")
+        print(f"\n[+] Elo Leaderboard saved to {output_file}")
 
         # 3. Rename files (from weakest to strongest, by Elo)
         temp_dir = os.path.join(self.champions_path, "temp")
@@ -238,7 +238,7 @@ class ParallelEvaluator(object):
             os.rename(os.path.join(temp_dir, fname), os.path.join(self.champions_path, fname))
         os.rmdir(temp_dir)
 
-        print("✅ Champions renamed (weakest -> strongest) by Elo.")
+        print("[+] Champions renamed (weakest -> strongest) by Elo.")
 
     # --------------------------------------------------------------------------
     # --- PUBLIC EVALUATION METHODS (ELO-BASED) ---
@@ -252,7 +252,7 @@ class ParallelEvaluator(object):
         self.champions_path = champions_path  # Ensure the path is set
         self._load_bots(reset_tournament_records=True)
 
-        print(f"▶ Starting full (Sequential) round-robin Elo evaluation for {len(self.all_bots)} bots...")
+        print(f"[>] Starting full (Sequential) round-robin Elo evaluation for {len(self.all_bots)} bots...")
 
         total_bots = len(self.all_bots)
         total_games = (total_bots * (total_bots - 1))
@@ -276,7 +276,7 @@ class ParallelEvaluator(object):
                 game_count += 2
                 print(f"  Games {game_count}/{total_games} completed... (Bot {id1} vs {id2})", end="\r")
 
-        print(f"\n▶ Full round-robin complete. Saving results...")
+        print(f"\n[>] Full round-robin complete. Saving results...")
         self._save_bots_and_leaderboard("Full Round-Robin Elo Leaderboard")
 
     def evaluate_and_rank_incremental(self, champions_path):
@@ -296,12 +296,12 @@ class ParallelEvaluator(object):
         last_id, last_bot, last_path = self.all_bots[0]
         previous_bots = self.all_bots[1:]
 
-        print(f"▶ Evaluating champ_{last_id} (Elo: {last_bot.elo:.2f}) against {len(previous_bots)} bots...")
+        print(f"[>] Evaluating champ_{last_id} (Elo: {last_bot.elo:.2f}) against {len(previous_bots)} bots...")
 
         total_games = len(previous_bots) * 2
 
         if total_games == 0:
-            print(f"▶ champ_{last_id} is the first bot. No incremental evaluation.")
+            print(f"[>] champ_{last_id} is the first bot. No incremental evaluation.")
             return
 
         # --- PHASE 1: Submit all games to the Parallel Pool ---
@@ -344,5 +344,5 @@ class ParallelEvaluator(object):
             # This function applies the Elo and W/D/L update
             self._process_game_result(bot1, bot2, result_code)
 
-        print(f"\n▶ Incremental evaluation complete. Saving results...")
+        print(f"\n[>] Incremental evaluation complete. Saving results...")
         self._save_bots_and_leaderboard("Incremental Elo Leaderboard")

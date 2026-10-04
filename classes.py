@@ -1,4 +1,5 @@
 import time
+import math
 from aux_neat_funcs import *
 
 
@@ -230,6 +231,12 @@ class Bot:
         # self.memory = {}
         # self.mem_frequency = {}
 
+    def _get_board_input(self, board):
+        input_size = len(self.net.input_nodes) if hasattr(self, 'net') and hasattr(self.net, 'input_nodes') else 768
+        if input_size == 64:
+            return get_numeric_board_ai_64(board.__str__())
+        return get_numeric_board_ai(board_str=board.__str__(), board=board)
+
     def make_decision(self, board, my_color: int):  # my color: 1 -> white / -1 -> black
         if my_color == 0:
             from time import sleep
@@ -263,8 +270,8 @@ class Bot:
                 else:  # Draw (stalemate, repetition, etc.)
                     points = 0.0
             else:
-                bot_input = get_numeric_board_ai(board_str=board.__str__())
-                response_bot = self.net.activate(bot_input)[0]  # running NN
+                bot_input = self._get_board_input(board)
+                response_bot = float(self.net.activate(bot_input)[0])  # running NN
                 response_bot *= my_color
                 points = response_bot
 
@@ -272,7 +279,7 @@ class Bot:
                 print(bot_input)
                 print(points)
 
-            if not (isinstance(points, float) or isinstance(points, int)):
+            if not (isinstance(points, (float, int)) or (isinstance(points, np.number) and not np.isnan(points))):
                 print("Weird Error")
                 print(points)
                 exit()
@@ -303,9 +310,8 @@ class Bot:
             else:  # Draw
                 return 0
 
-        # Note: assumes get_numeric_board_ai is defined/imported
-        bot_input = get_numeric_board_ai(board_str=board.__str__())
-        response_bot = self.net.activate(bot_input)[0]  # NN gives score from White's POV
+        bot_input = self._get_board_input(board)
+        response_bot = float(self.net.activate(bot_input)[0])  # NN gives score from White's POV
 
         # Convert score to bot's perspective
         response_bot *= my_color
