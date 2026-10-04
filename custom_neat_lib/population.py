@@ -52,6 +52,8 @@ class Population(object):
             self.species.speciate(config, self.population, self.generation)
         else:
             self.population, self.species, self.generation = initial_state
+            if hasattr(self.species, 'reporters'):
+                self.species.reporters = self.reporters
 
         self.best_genome = None
 
@@ -136,10 +138,16 @@ class Population(object):
 
             # - custom puzzles -
 
-            puzzles_scripts_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-            puzzle_generator_path = os.path.join(puzzles_scripts_path, '__puzzle_generator_V2_PGN.py')
-            puzzle_filter_path = os.path.join(puzzles_scripts_path, '__puzzleV2_FILTER.py')
+            puzzle_generator_path = '__puzzle_generator_V2_PGN.py'
+            puzzle_filter_path = '__puzzleV2_FILTER.py'
+            if not os.path.isfile(puzzle_generator_path):
+                root_gen = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzle_generator_V2_PGN.py')
+                if os.path.isfile(root_gen):
+                    puzzle_generator_path = os.path.relpath(root_gen)
+            if not os.path.isfile(puzzle_filter_path):
+                root_fil = os.path.join(os.path.dirname(os.path.dirname(__file__)), '__puzzleV2_FILTER.py')
+                if os.path.isfile(root_fil):
+                    puzzle_filter_path = os.path.relpath(root_fil)
 
             if self.generation%50 == 0 and self.generation > 0:
                 from custom_neat_lib.puzzles_pgn_handler import merge_pgns

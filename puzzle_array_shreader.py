@@ -2,9 +2,14 @@ import os
 import pickle
 from tqdm import tqdm
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-input_puzzle_path = os.path.join(base_dir, 'human_puzzles', 'human_moves.puzzle')
-output_puzzle_path = os.path.join(base_dir, 'human_puzzles', 'human_moves_stream.puzzle')
+input_puzzle_path = os.path.join('human_puzzles', 'human_moves.puzzle')
+output_puzzle_path = os.path.join('human_puzzles', 'human_moves_stream.puzzle')
+
+if not os.path.isfile(input_puzzle_path):
+    script_in = os.path.join(os.path.dirname(__file__), input_puzzle_path)
+    if os.path.isfile(script_in):
+        input_puzzle_path = os.path.relpath(script_in)
+        output_puzzle_path = os.path.relpath(os.path.join(os.path.dirname(__file__), output_puzzle_path))
 
 if not os.path.isfile(input_puzzle_path):
     print(f"Input puzzle file not found at: {input_puzzle_path}")

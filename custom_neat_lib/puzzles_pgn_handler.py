@@ -5,9 +5,16 @@ def merge_pgns(name):
     from custom_neat_lib.aux_puzzles_handler import get_full_paths_in_folder, count_games, get_games_headers_arr
     import re
 
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    basePathInput = os.path.join(project_root, '_pgns_to_merge')
-    basePathOutput = os.path.join(project_root, 'aux_files', '_pgns_database')
+    basePathInput = '_pgns_to_merge'
+    basePathOutput = os.path.join('aux_files', '_pgns_database')
+    if not os.path.isdir(basePathInput):
+        root_in = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_pgns_to_merge')
+        if os.path.isdir(root_in):
+            basePathInput = os.path.relpath(root_in)
+    if not os.path.isdir(basePathOutput):
+        root_out = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'aux_files', '_pgns_database')
+        if os.path.isdir(root_out):
+            basePathOutput = os.path.relpath(root_out)
     os.makedirs(basePathInput, exist_ok=True)
     os.makedirs(basePathOutput, exist_ok=True)
     filename_output = name + ".pgn"

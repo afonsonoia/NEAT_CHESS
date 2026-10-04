@@ -25,11 +25,29 @@ def eval_func_puzzles(genome, config, NUM_ATTEMPTS: int, generation_number: int)
 
     records = {}
 
-    local_dir = os.path.dirname(os.path.abspath(__file__))
-    puzzles_file_path = os.path.join(local_dir, 'human_puzzles', 'all_files', 'twic_and_gms.puzzle')
-    if not os.path.isfile(puzzles_file_path):
-        puzzles_file_path = os.path.join(local_dir, 'human_puzzles', 'human_moves_stream.puzzle')
-    partial_puzzles_folder_path = os.path.join(local_dir, 'aux_files', '__puzzles_results')
+    # Candidate puzzle files using relative paths
+    puzzle_candidates = [
+        os.path.join('human_puzzles', 'all_files', 'twic_and_gms.puzzle'),
+        os.path.join('human_puzzles', 'human_moves_stream.puzzle'),
+        os.path.join('human_puzzles', 'human_moves.puzzle'),
+        os.path.join('aux_files', 'puzzles_generated.puzzle'),
+        os.path.join('_secure_backups', 'auto puzzles', 'puzzles_generated.puzzle'),
+    ]
+    puzzles_file_path = None
+    for cand in puzzle_candidates:
+        if os.path.isfile(cand):
+            puzzles_file_path = cand
+            break
+        script_dir = os.path.dirname(__file__) if '__file__' in globals() else '.'
+        cand_script = os.path.join(script_dir, cand)
+        if os.path.isfile(cand_script):
+            puzzles_file_path = os.path.relpath(cand_script)
+            break
+
+    if puzzles_file_path is None:
+        puzzles_file_path = os.path.join('human_puzzles', 'human_moves_stream.puzzle')
+
+    partial_puzzles_folder_path = os.path.join('aux_files', '__puzzles_results')
     percentage_update_puzzles_diff = 0
 
     sleeping_secure()
@@ -54,7 +72,6 @@ def eval_func_puzzles(genome, config, NUM_ATTEMPTS: int, generation_number: int)
         puzzles_file = open(puzzles_file_path, 'rb')
     except FileNotFoundError:
         print(f"\n[CRITICAL ERROR] File not found: {puzzles_file_path}")
-        time.sleep(2)
         return 0
 
     end_of_file = False
@@ -69,7 +86,13 @@ def eval_func_puzzles(genome, config, NUM_ATTEMPTS: int, generation_number: int)
         # 1. Pull a batch of N puzzles from disk
         for _ in range(PREFETCH_SIZE):
             try:
-                ram_puzzles_buffer.append(pickle.load(puzzles_file))
+                item = pickle.load(puzzles_file)
+                if isinstance(item, list):
+                    ram_puzzles_buffer.extend(item)
+                    end_of_file = True
+                    break
+                else:
+                    ram_puzzles_buffer.append(item)
             except EOFError:
                 end_of_file = True
                 break
@@ -157,11 +180,10 @@ def aux_single_game(bot1, bot2, record_game: bool, alt_record_path=False):
     n_moves = 0
     board = chess.Board()
 
-    local_dir = os.path.dirname(os.path.abspath(__file__))
     if alt_record_path:
-        path_records = os.path.join(local_dir, "_pgns_to_merge_2")
+        path_records = "_pgns_to_merge_2"
     else:
-        path_records = os.path.join(local_dir, "_pgns_to_merge")
+        path_records = "_pgns_to_merge"
 
     while not board.outcome():
         if board.turn:
@@ -333,10 +355,9 @@ if __name__ == "__main__":
     from ______FULL_RESET______ import full_reset
     from aux_backup_managemment import BACKUP_FOLDER, get_last_backup_path, restore_checkpoint
 
-    local_dir = os.path.dirname(os.path.abspath(__file__))
-    path_champions = os.path.join(local_dir, "champions")
-    partial_puzzles_files = os.path.join(local_dir, "aux_files", "__puzzles_results")
-    backups_folder = os.path.join(local_dir, "backups")
+    path_champions = "champions"
+    partial_puzzles_files = os.path.join("aux_files", "__puzzles_results")
+    backups_folder = "backups"
     CONTINUE_FROM_CHECKPOINT = True
     MAX_NUM_GENERATIONS = -1
 
@@ -344,10 +365,15 @@ if __name__ == "__main__":
     os.makedirs(path_champions, exist_ok=True)
     os.makedirs(partial_puzzles_files, exist_ok=True)
     os.makedirs(backups_folder, exist_ok=True)
-    os.makedirs(os.path.join(local_dir, "_pgns_to_merge"), exist_ok=True)
-    os.makedirs(os.path.join(local_dir, "_pgns_to_merge_2"), exist_ok=True)
+    os.makedirs("_pgns_to_merge", exist_ok=True)
+    os.makedirs("_pgns_to_merge_2", exist_ok=True)
 
-    config_path = os.path.join(local_dir, '_chess_config.txt')
+    config_path = '_chess_config.txt'
+    if not os.path.isfile(config_path):
+        script_cfg = os.path.join(os.path.dirname(__file__), '_chess_config.txt')
+        if os.path.isfile(script_cfg):
+            config_path = os.path.relpath(script_cfg)
+
     config = custom_neat_lib.Config(custom_neat_lib.DefaultGenome, custom_neat_lib.DefaultReproduction, custom_neat_lib.DefaultSpeciesSet,
                                     custom_neat_lib.DefaultStagnation, config_path)
 
@@ -376,7 +402,7 @@ if __name__ == "__main__":
         print("Starting new population")
         pop = custom_neat_lib.Population(config, path_champions=path_champions)
 
-    filenamePrefix = os.path.join(local_dir, 'backups', 'backup_')
+    filenamePrefix = os.path.join('backups', 'backup_')
 
     stats = custom_neat_lib.StatisticsReporter()
     pop.add_reporter(stats)
@@ -391,7 +417,7 @@ if __name__ == "__main__":
     else:
         winner = pop.run(pe.evaluate)
 
-    winner_save_path = os.path.join(local_dir, 'chess_winner')
+    winner_save_path = 'chess_winner'
     with open(winner_save_path, 'wb') as f:
         pickle.dump(winner, f)
     print(winner)

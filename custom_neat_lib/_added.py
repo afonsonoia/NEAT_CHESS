@@ -42,9 +42,16 @@ def savePickleData(path, data_to_save):
 
 def save_files_secure_backups():
     import os
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    original_path = os.path.join(project_root, 'aux_files')
-    secure_backups_path = os.path.join(project_root, '_secure_backups', 'auto puzzles')
+    original_path = 'aux_files'
+    secure_backups_path = os.path.join('_secure_backups', 'auto puzzles')
+    if not os.path.isdir(original_path):
+        root_orig = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'aux_files')
+        if os.path.isdir(root_orig):
+            original_path = os.path.relpath(root_orig)
+    if not os.path.isdir(secure_backups_path):
+        root_sec = os.path.join(os.path.dirname(os.path.dirname(__file__)), '_secure_backups', 'auto puzzles')
+        if os.path.isdir(root_sec):
+            secure_backups_path = os.path.relpath(root_sec)
     os.makedirs(original_path, exist_ok=True)
     os.makedirs(secure_backups_path, exist_ok=True)
 
@@ -63,12 +70,31 @@ def update_puzzles_diff():
     import pickle
     from classes import generateSortValuePuzzlesV2
 
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    original_path = os.path.join(project_root, 'human_puzzles', 'all_files', 'twic_and_gms.puzzle')
-    if not os.path.isfile(original_path):
-        original_path = os.path.join(project_root, 'human_puzzles', 'human_moves_stream.puzzle')
+    candidates = [
+        os.path.join('human_puzzles', 'all_files', 'twic_and_gms.puzzle'),
+        os.path.join('human_puzzles', 'human_moves_stream.puzzle'),
+        os.path.join('human_puzzles', 'human_moves.puzzle'),
+        os.path.join('aux_files', 'puzzles_generated.puzzle'),
+        os.path.join('_secure_backups', 'auto puzzles', 'puzzles_generated.puzzle'),
+    ]
+    original_path = None
+    for cand in candidates:
+        if os.path.isfile(cand):
+            original_path = cand
+            break
+        root_cand = os.path.join(os.path.dirname(os.path.dirname(__file__)), cand)
+        if os.path.isfile(root_cand):
+            original_path = os.path.relpath(root_cand)
+            break
 
-    partials_path = os.path.join(project_root, 'aux_files', '__puzzles_results')
+    if original_path is None:
+        original_path = os.path.join('human_puzzles', 'human_moves_stream.puzzle')
+
+    partials_path = os.path.join('aux_files', '__puzzles_results')
+    if not os.path.isdir(partials_path):
+        root_partials = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'aux_files', '__puzzles_results')
+        if os.path.isdir(root_partials):
+            partials_path = os.path.relpath(root_partials)
     os.makedirs(partials_path, exist_ok=True)
 
     # Get a list of all file names in the folder (exclude directories)

@@ -1,10 +1,15 @@
 import os
-BACKUP_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backups')
+BACKUP_FOLDER = 'backups'
 
 
 def get_last_backup_path(folder_path=BACKUP_FOLDER):
     import os
     import re
+
+    if not os.path.exists(folder_path):
+        script_folder = os.path.join(os.path.dirname(__file__), folder_path)
+        if os.path.exists(script_folder):
+            folder_path = os.path.relpath(script_folder)
 
     if not os.path.exists(folder_path):
         os.makedirs(folder_path, exist_ok=True)

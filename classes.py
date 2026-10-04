@@ -49,7 +49,11 @@ class PuzzleV2:
         return self.fen
 
     def get_best_moves_list_strs(self):
-        return self.best_moves_list_strs
+        if hasattr(self, 'best_moves_list_strs'):
+            return self.best_moves_list_strs
+        if hasattr(self, 'best_move_str'):
+            return [self.best_move_str]
+        return []
 
     def update_depth_checked(self, new_depth, sudo=False):
         if sudo:
