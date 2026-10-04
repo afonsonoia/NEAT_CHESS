@@ -8,7 +8,8 @@ import time
 from stockfish import Stockfish
 from aux_funcs_random import create_continue_file, check_continue_file, get_current_time_str_print, timeout, terminate_process_by_name
 
-processed_moves_path = r'./aux_files/processed_moves.fens'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+processed_moves_path = os.path.join(BASE_DIR, 'aux_files', 'processed_moves.fens')
 
 if os.path.isfile(processed_moves_path):
     processed_file = open(processed_moves_path, 'rb')

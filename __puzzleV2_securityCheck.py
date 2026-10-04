@@ -9,8 +9,9 @@ from stockfish import Stockfish
 DEPTH_stockfish = 24
 THREADS = 2
 
-engine_path = r'./stockfish_16/stockfish-windows-x86-64-avx2.exe'
-puzzles_file_path = r'aux_files/puzzles_generated.puzzle'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+engine_path = os.path.join(BASE_DIR, 'stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 # check if already in database
 if os.path.isfile(puzzles_file_path):

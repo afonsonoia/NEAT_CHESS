@@ -41,10 +41,11 @@ if __name__ == '__main__':
 
     runStockfish = timeout(timeout=TIMEOUT_SECONDS)(runStockfish_pure)
 
-    puzzles_file_path = os.path.join('aux_files', 'puzzles_generated.puzzle')
-    pgn_folder_path = os.path.join('aux_files', '_pgns_database')
-    engine_path = os.path.join('stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
-    processed_moves_path = os.path.join('aux_files', 'processed_moves.fens')
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
+    pgn_folder_path = os.path.join(BASE_DIR, 'aux_files', '_pgns_database')
+    engine_path = os.path.join(BASE_DIR, 'stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
+    processed_moves_path = os.path.join(BASE_DIR, 'aux_files', 'processed_moves.fens')
 
     puzzles_arr = []
     num_games = 0

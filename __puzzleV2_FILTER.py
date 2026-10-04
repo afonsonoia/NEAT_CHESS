@@ -14,9 +14,10 @@ CENTIPAWN_MIN_DIFERENCE_PUZZLE = 35
 NIGHT_MODE = False
 night_delay = 15
 
-processed_file_path = r'./aux_files/processed_moves.fens'
-puzzles_file_path = r'./aux_files/puzzles_generated.puzzle'
-engine_path = r'./stockfish_16/stockfish-windows-x86-64-avx2.exe'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+processed_file_path = os.path.join(BASE_DIR, 'aux_files', 'processed_moves.fens')
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
+engine_path = os.path.join(BASE_DIR, 'stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
 
 
 def remove_element_at_position(matrix, i):

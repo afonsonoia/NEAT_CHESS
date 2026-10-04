@@ -11,8 +11,9 @@ display_diff_full = False
 display_diff_partial = True
 divisior = 5
 
-processed_file_path = r'./aux_files/processed_moves.fens'
-puzzles_file_path = r'aux_files/puzzles_generated.puzzle'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+processed_file_path = os.path.join(BASE_DIR, 'aux_files', 'processed_moves.fens')
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 amount_by_depth = {}
 

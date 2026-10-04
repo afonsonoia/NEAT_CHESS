@@ -1,5 +1,6 @@
 
-THEORY_DICT_PATH = r"aux_files/massive_theory.dict"
+import os
+THEORY_DICT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aux_files", "massive_theory.dict")
 
 
 def store_full_dict(dict):

@@ -26,8 +26,9 @@ class ChessGame:
             'wB', 'wK', 'wN', 'wP', 'wQ', 'wR'
         ]
 
+        base_dir = os.path.dirname(os.path.abspath(__file__))
         for piece in pieces:
-            image_path = os.path.join('images', f'{piece}.png')
+            image_path = os.path.join(base_dir, 'images', f'{piece}.png')
             self.piece_images[piece] = pygame.image.load(image_path)
 
         # Create the window

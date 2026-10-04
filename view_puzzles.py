@@ -5,7 +5,8 @@ import os.path
 import pyperclip
 
 contador = 0
-puzzles_file_path = r'./aux_files/puzzles_generated.puzzle'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 if not os.path.isfile(puzzles_file_path):
     print("No Puzzles file Found!")

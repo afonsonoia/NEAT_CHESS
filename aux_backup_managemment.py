@@ -1,4 +1,5 @@
-BACKUP_FOLDER = r'./backups'
+import os
+BACKUP_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backups')
 
 
 def get_last_backup_path(folder_path=BACKUP_FOLDER):

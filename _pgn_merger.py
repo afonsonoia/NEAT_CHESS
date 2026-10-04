@@ -7,8 +7,9 @@ def merge_pgns(name):
 
     filename_output = name + ".pgn"
 
-    output_file_path = os.path.join("aux_files", filename_output)
-    folder_pgns_to_merge = "_pgns_to_merge"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    output_file_path = os.path.join(base_dir, "aux_files", filename_output)
+    folder_pgns_to_merge = os.path.join(base_dir, "_pgns_to_merge")
 
     all_pgns_paths = get_full_paths_in_folder(folder_pgns_to_merge)
 

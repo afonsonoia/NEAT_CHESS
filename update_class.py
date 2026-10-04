@@ -7,7 +7,8 @@ import random
 from stockfish import Stockfish
 from aux_funcs_random import create_continue_file, check_continue_file
 
-puzzles_file_path = r'aux_files/puzzles_generated.puzzle'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 
 def update_puzzlesV2_file(puzzlesV2_arr):

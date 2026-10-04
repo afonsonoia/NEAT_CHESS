@@ -25,7 +25,8 @@ max_n_moves_opening = 10
 min_opening_moves = 6       # brute force first moves
 num_max_options = 5         # after min_opening_moves
 
-engine_path = r'stockfish_16/stockfish-windows-x86-64-avx2.exe'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+engine_path = os.path.join(BASE_DIR, 'stockfish_16', 'stockfish-windows-x86-64-avx2.exe')
 
 
 board = chess.Board()

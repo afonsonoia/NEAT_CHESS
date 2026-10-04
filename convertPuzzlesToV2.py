@@ -3,7 +3,9 @@ from classes import *
 
 # -------------------------------------------
 
-puzzles_file_path = r'aux_files/puzzles_generated.puzzle'
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 puzzles_file = open(puzzles_file_path, 'rb')
 puzzles_arr = pickle.load(puzzles_file)

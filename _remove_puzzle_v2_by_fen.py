@@ -3,7 +3,8 @@ import os
 import time
 import random
 
-puzzles_file_path = r'aux_files/puzzles_generated.puzzle'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+puzzles_file_path = os.path.join(BASE_DIR, 'aux_files', 'puzzles_generated.puzzle')
 
 
 def remove_puzzle_by_fen(arr_puzzlesV2, fen):

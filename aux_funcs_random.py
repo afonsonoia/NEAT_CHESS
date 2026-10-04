@@ -1,7 +1,9 @@
+import os
 import time
 
-continue_file_path = r'___CONTINUE.txt'
-locked_files_path = r'___RED_LIGHT.txt'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+continue_file_path = os.path.join(BASE_DIR, '___CONTINUE.txt')
+locked_files_path = os.path.join(BASE_DIR, '___RED_LIGHT.txt')
 
 
 def get_current_time_str():
