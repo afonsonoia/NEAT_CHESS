@@ -4,7 +4,8 @@ import pickle
 
 # Total number of bots (0 through 115 inclusive)
 BOT_NUMBER = 48
-path_champions = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+path_champions = os.path.join(BASE_DIR, "champions")
 
 # Load all bots
 all_bots = []

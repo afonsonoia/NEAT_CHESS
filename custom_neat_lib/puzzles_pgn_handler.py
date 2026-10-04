@@ -5,8 +5,9 @@ def merge_pgns(name):
     from custom_neat_lib.aux_puzzles_handler import get_full_paths_in_folder, count_games, get_games_headers_arr
     import re
 
-    basePathInput = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\_pgns_to_merge'
-    basePathOutput = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\_pgns_database'
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    basePathInput = os.path.join(project_root, '_pgns_to_merge')
+    basePathOutput = os.path.join(project_root, 'aux_files', '_pgns_database')
     filename_output = name + ".pgn"
 
     input_file_path = basePathInput

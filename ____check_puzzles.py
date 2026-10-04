@@ -9,8 +9,8 @@ import time
 from stockfish import Stockfish
 from aux_funcs_random import create_continue_file, check_continue_file, get_current_time_str_print, timeout, terminate_process_by_name
 
-puzzles_file_path = r'.\aux_files\puzzles_generated_white.puzzle'
-processed_moves_path = r'.\aux_files\processed_moves.fens'
+puzzles_file_path = os.path.join('aux_files', 'puzzles_generated_white.puzzle')
+processed_moves_path = os.path.join('aux_files', 'processed_moves.fens')
 
 puzzles_arr = [[], []]
 num_games = 0

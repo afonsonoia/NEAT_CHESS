@@ -21,9 +21,10 @@ logging.getLogger("chess.pgn").setLevel(logging.CRITICAL)
 
 # ===================================================================
 # 0. GENERAL CONFIGURATION
-# ===================================================================
-PGN_FOLDER_PATH = r'./aux_files/BIG_BUCKET'
-OUTPUT_DIR = r'D:\downloads'  # Change to external drive if needed
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+PGN_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'aux_files', 'BIG_BUCKET')
+OUTPUT_DIR = os.path.join(BASE_DIR, 'all_files')
 FINAL_PUZZLE_NAME = 'twic_and_gms.puzzle'
 
 MAX_ITEMS_PER_CHUNK = 500_000

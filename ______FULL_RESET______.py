@@ -5,9 +5,13 @@ def full_reset():
 
     DELETE_CHAMPIONS = True
 
-    path_champions = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
-    partial_puzzles_files = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\__puzzles_results"
-    backups_paths = r'backups'
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path_champions = os.path.join(base_dir, "champions")
+    partial_puzzles_files = os.path.join(base_dir, "aux_files", "__puzzles_results")
+    backups_paths = os.path.join(base_dir, "backups")
+    os.makedirs(path_champions, exist_ok=True)
+    os.makedirs(partial_puzzles_files, exist_ok=True)
+    os.makedirs(backups_paths, exist_ok=True)
     main_arr = []
 
     print("\n!!  -----  FULL RESET  -----  !!\n\n")

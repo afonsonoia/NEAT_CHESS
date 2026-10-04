@@ -38,15 +38,18 @@ def savePickleData(path, data_to_save):
 
 def save_files_secure_backups():
     import os
-    original_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files'
-    secure_backups_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\_secure_backups\auto puzzles'
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    original_path = os.path.join(project_root, 'aux_files')
+    secure_backups_path = os.path.join(project_root, '_secure_backups', 'auto puzzles')
+    os.makedirs(secure_backups_path, exist_ok=True)
 
     files_to_copy = [r'processed_moves.fens', r'puzzles_generated.puzzle']
 
     for file_name in files_to_copy:
         path_i = os.path.join(original_path, file_name)
         path_f = os.path.join(secure_backups_path, file_name)
-        copy_file(path_i, path_f)
+        if os.path.isfile(path_i):
+            copy_file(path_i, path_f)
     return
 
 
@@ -55,8 +58,10 @@ def update_puzzles_diff():
     import pickle
     from classes import generateSortValuePuzzlesV2
 
-    original_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\human_puzzles\human_moves_stream.puzzle'
-    partials_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\__puzzles_results'
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    original_path = os.path.join(project_root, 'human_puzzles', 'human_moves_stream.puzzle')
+    partials_path = os.path.join(project_root, 'aux_files', '__puzzles_results')
+    os.makedirs(partials_path, exist_ok=True)
 
     # Get a list of all file names in the folder (exclude directories)
     file_names = [f for f in os.listdir(partials_path) if os.path.isfile(os.path.join(partials_path, f))]

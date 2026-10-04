@@ -8,10 +8,10 @@ from datetime import datetime
 # ================= CONFIG =================
 BOT_NUMBER = 25
 
-CHAMPIONS_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
-ELO_PATH = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\leaderboard_elo.txt"
-
-PLOTS_ROOT_DIR = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\bot_analisys_plots"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHAMPIONS_DIR = os.path.join(BASE_DIR, "champions")
+ELO_PATH = os.path.join(BASE_DIR, "leaderboard_elo.txt")
+PLOTS_ROOT_DIR = os.path.join(BASE_DIR, "bot_analisys_plots")
 # =========================================
 
 # ================= DATE FOLDER =================

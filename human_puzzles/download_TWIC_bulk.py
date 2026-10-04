@@ -4,8 +4,8 @@ import os
 
 # 1. Configuration
 START_NUMBER = 920
-END_NUMBER = 1637
-DESTINATION_FOLDER = r"D:\downloads"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DESTINATION_FOLDER = os.path.join(BASE_DIR, "downloads")
 
 os.makedirs(DESTINATION_FOLDER, exist_ok=True)
 

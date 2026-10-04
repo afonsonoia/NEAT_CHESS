@@ -135,7 +135,7 @@ class Population(object):
 
             # - custom puzzles -
 
-            puzzles_scripts_path = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS'
+            puzzles_scripts_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
             puzzle_generator_path = os.path.join(puzzles_scripts_path, '__puzzle_generator_V2_PGN.py')
             puzzle_filter_path = os.path.join(puzzles_scripts_path, '__puzzleV2_FILTER.py')
@@ -145,10 +145,10 @@ class Population(object):
                 merge_pgns("nn")
 
                 # run puzzle generator
-                subprocess.run(['python', puzzle_generator_path])
+                subprocess.run([sys.executable, puzzle_generator_path])
 
                 # run puzzle filter
-                #subprocess.run(['python', puzzle_filter_path])
+                #subprocess.run([sys.executable, puzzle_filter_path])
 
 
             AMOUNT_SPECIES_WANTED = 7.0

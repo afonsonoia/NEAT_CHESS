@@ -89,10 +89,12 @@ def get_full_paths_in_folder(folder_path):
 
 
 if __name__ == "__main__":
-    pgn_path = r'C:\Users\Afonso Noia\Downloads\kasparov_topalov_1999.pgn'
-    file = open(pgn_path, 'r')
-    pgn = file.read()
-    file.close()
-
-    display_board_after_moves(pgn)
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    pgn_path = os.path.join(local_dir, 'sample_game.pgn')
+    if os.path.isfile(pgn_path):
+        with open(pgn_path, 'r') as file:
+            pgn = file.read()
+        display_board_after_moves(pgn)
+    else:
+        print(f"Sample PGN not found at: {pgn_path}")
 

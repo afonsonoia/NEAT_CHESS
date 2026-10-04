@@ -25,8 +25,11 @@ def eval_func_puzzles(genome, config, NUM_ATTEMPTS: int, generation_number: int)
 
     records = {}
 
-    puzzles_file_path = r'C:/Users/Afonso Noia/PycharmProjects/NEAT_CHESS/human_puzzles/all_files/twic_and_gms.puzzle'
-    partial_puzzles_folder_path = r'./aux_files/__puzzles_results'
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    puzzles_file_path = os.path.join(local_dir, 'human_puzzles', 'all_files', 'twic_and_gms.puzzle')
+    if not os.path.isfile(puzzles_file_path):
+        puzzles_file_path = os.path.join(local_dir, 'human_puzzles', 'human_moves_stream.puzzle')
+    partial_puzzles_folder_path = os.path.join(local_dir, 'aux_files', '__puzzles_results')
     percentage_update_puzzles_diff = 0
 
     sleeping_secure()
@@ -154,10 +157,11 @@ def aux_single_game(bot1, bot2, record_game: bool, alt_record_path=False):
     n_moves = 0
     board = chess.Board()
 
+    local_dir = os.path.dirname(os.path.abspath(__file__))
     if alt_record_path:
-        path_records = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\_pgns_to_merge_2"
+        path_records = os.path.join(local_dir, "_pgns_to_merge_2")
     else:
-        path_records = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\_pgns_to_merge"
+        path_records = os.path.join(local_dir, "_pgns_to_merge")
 
     while not board.outcome():
         if board.turn:
@@ -328,12 +332,12 @@ if __name__ == "__main__":
     from ______FULL_RESET______ import full_reset
     from aux_backup_managemment import BACKUP_FOLDER, get_last_backup_path, restore_checkpoint
 
-    path_champions = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\champions"
-    partial_puzzles_files = r"C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\aux_files\__puzzles_results"
+    local_dir = os.path.dirname(os.path.abspath(__file__))
+    path_champions = os.path.join(local_dir, "champions")
+    partial_puzzles_files = os.path.join(local_dir, "aux_files", "__puzzles_results")
     CONTINUE_FROM_CHECKPOINT = True
     MAX_NUM_GENERATIONS = -1
 
-    local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, '_chess_config.txt')
     config = custom_neat_lib.Config(custom_neat_lib.DefaultGenome, custom_neat_lib.DefaultReproduction, custom_neat_lib.DefaultSpeciesSet,
                                     custom_neat_lib.DefaultStagnation, config_path)
@@ -363,7 +367,7 @@ if __name__ == "__main__":
         print("Starting new population")
         pop = custom_neat_lib.Population(config, path_champions=path_champions)
 
-    filenamePrefix = r'C:\Users\Afonso Noia\PycharmProjects\NEAT_CHESS\backups\backup_'
+    filenamePrefix = os.path.join(local_dir, 'backups', 'backup_')
 
     stats = custom_neat_lib.StatisticsReporter()
     pop.add_reporter(stats)
