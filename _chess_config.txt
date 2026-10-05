@@ -1,8 +1,4 @@
-# NEAT configuration for the bit-sequence memory experiment.
-
-# The `NEAT` section specifies parameters particular to the NEAT algorithm
-# or the experiment itself.  This is the only required section.
-# output = activation(bias+(response∗aggregation(inputs)))
+# NEAT configuration for Chess Evaluation
 
 [NEAT]
 fitness_criterion     = max
@@ -12,34 +8,34 @@ reset_on_extinction   = 0
 
 [DefaultGenome]
 num_inputs              = 768
-num_hidden              = 10
+num_hidden              = 0
 num_outputs             = 1
-initial_connection      = partial_nodirect 0.06
+initial_connection      = full_direct
 feed_forward            = True
 
-compatibility_disjoint_coefficient    = 1.0
-compatibility_weight_coefficient      = 0.3
+compatibility_disjoint_coefficient = 1.0
+compatibility_weight_coefficient   = 0.4
 
-conn_add_prob           = 0.15
-conn_delete_prob        = 0.12
-node_add_prob           = 0.15
-node_delete_prob        = 0.12
+conn_add_prob           = 0.12
+conn_delete_prob        = 0.05
+node_add_prob           = 0.03
+node_delete_prob        = 0.03
 
-activation_default      = relu
-activation_options      = relu
-activation_mutate_rate  = 0.00001
+activation_default      = tanh
+activation_options      = tanh
+activation_mutate_rate  = 0.0
 
 aggregation_default     = sum
 aggregation_options     = sum
 aggregation_mutate_rate = 0.00001
 
-bias_init_mean          = 0.2
-bias_init_stdev         = 1.0
-bias_replace_rate       = 0.001
-bias_mutate_rate        = 0.05
-bias_mutate_power       = 0.1
-bias_max_value          = 1.0
-bias_min_value          = -1.0
+bias_init_mean          = 0.0
+bias_init_stdev         = 0.5
+bias_replace_rate       = 0.05
+bias_mutate_rate        = 0.6
+bias_mutate_power       = 0.3
+bias_max_value          = 3.0
+bias_min_value          = -3.0
 
 response_init_mean      = 0.5
 response_init_stdev     = 1.0
@@ -49,27 +45,27 @@ response_mutate_power   = 0.1
 response_max_value      = 1.5
 response_min_value      = -1.5
 
-weight_init_mean        = 0.5
-weight_init_stdev       = 1.0
-weight_replace_rate     = 0.001
-weight_mutate_rate      = 0.05
-weight_mutate_power     = 0.1
-weight_max_value        = 1.0
-weight_min_value        = -1.0
+weight_init_mean        = 0.0
+weight_init_stdev       = 0.5
+weight_replace_rate     = 0.05
+weight_mutate_rate      = 0.7
+weight_mutate_power     = 0.3
+weight_max_value        = 3.0
+weight_min_value        = -3.0
 
 structural_mutation_surer	= True
 single_structural_mutation 	= False
 
 enabled_default         = True
-enabled_mutate_rate     = 0.0002
+enabled_mutate_rate     = 0.01
 
 [DefaultSpeciesSet]
-compatibility_threshold = 5.0
+compatibility_threshold = 2.5
 
 [DefaultStagnation]
 species_fitness_func = max
-max_stagnation  = 100
+max_stagnation       = 50
 
 [DefaultReproduction]
-elitism            = 3
-survival_threshold = 0.3
+elitism            = 2
+survival_threshold = 0.25
