@@ -7,6 +7,60 @@ import chess
 import chess.pgn
 from os.path import join
 import math
+from classes import Bot, get_numeric_board_pawns_calculation
+
+# Worker-level champions cache to eliminate IPC pickling/unpickling overhead
+_WORKER_CHAMPIONS_CACHE = {
+    'path': None,
+    'mtime_sig': None,
+    'champions': []
+}
+
+
+def get_cached_champions(champions_source):
+    """
+    Returns the list of champion Bot objects.
+    If champions_source is a list, returns it directly.
+    If champions_source is a directory path, maintains an in-process worker cache,
+    loading and optimizing champions only once or when directory files change.
+    """
+    if isinstance(champions_source, list):
+        return champions_source
+
+    champions_path = str(champions_source)
+    if not os.path.exists(champions_path):
+        return []
+
+    # Get list of champion files with their modification times
+    files = [f for f in os.listdir(champions_path) if f.startswith('champ_') and f.endswith('.pickle')]
+    files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
+
+    mtime_sig = tuple((f, os.path.getmtime(os.path.join(champions_path, f))) for f in files)
+
+    if (
+        _WORKER_CHAMPIONS_CACHE['path'] == champions_path
+        and _WORKER_CHAMPIONS_CACHE['mtime_sig'] == mtime_sig
+        and _WORKER_CHAMPIONS_CACHE['champions']
+    ):
+        return _WORKER_CHAMPIONS_CACHE['champions']
+
+    loaded_champions = []
+    for f in files:
+        full_path = os.path.join(champions_path, f)
+        try:
+            with open(full_path, 'rb') as fp:
+                bot = pickle.load(fp)
+                if getattr(bot, 'optimized_net', None) is None:
+                    bot.generate_optimized_net()
+                loaded_champions.append(bot)
+        except Exception as e:
+            print(f"[Worker] Error loading champion {f}: {e}")
+
+    _WORKER_CHAMPIONS_CACHE['path'] = champions_path
+    _WORKER_CHAMPIONS_CACHE['mtime_sig'] = mtime_sig
+    _WORKER_CHAMPIONS_CACHE['champions'] = loaded_champions
+    return loaded_champions
+
 
 def sleeping_secure():
     from aux_funcs_random import check_continue_file
@@ -338,7 +392,7 @@ def eval_function_simple(genome, config, champions_arr: list, generation_number:
 ENABLE_PUZZLES = False
 
 
-def eval_function(genome, config, champions_arr, generation_number: int):
+def eval_function(genome, config, champions_source, generation_number: int):
     score = 0.0
 
     if ENABLE_PUZZLES:
@@ -347,6 +401,7 @@ def eval_function(genome, config, champions_arr, generation_number: int):
         num_puzzles_sucess = eval_func_puzzles(genome, config, int(puzzle_attempts), generation_number)
         score += (num_puzzles_sucess * puzzle_base_score)
 
+    champions_arr = get_cached_champions(champions_source)
     games_results = eval_function_simple(genome, config, champions_arr, generation_number)
     score += float(games_results[0])
 

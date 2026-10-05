@@ -244,7 +244,7 @@ class Bot:
         active_net = getattr(self, 'optimized_net', None) or self.net
         input_size = len(active_net.input_nodes) if hasattr(active_net, 'input_nodes') else 768
         if input_size == 64:
-            return get_numeric_board_ai_64(board.__str__())
+            return get_numeric_board_ai_64(board=board)
         return get_numeric_board_ai(board=board)
 
     def make_decision(self, board, my_color: int):  # my color: 1 -> white / -1 -> black
@@ -271,11 +271,9 @@ class Bot:
             outcome = board.outcome()
             if outcome is not None:
                 # If it's a win for the bot, play immediately!
-                if (outcome.winner is True and my_color == 1) or (outcome.winner is False and my_color == -1):
+                if outcome.winner is not None:
                     board.pop()
                     return m
-                elif (outcome.winner is False and my_color == 1) or (outcome.winner is True and my_color == -1):
-                    points = -99999.0
                 else:  # Draw (stalemate, repetition, etc.)
                     points = 0.0
             else:

@@ -143,6 +143,18 @@ def simplify_graph(nodes_data, output_nodes, inputs_non_negative=False):
     return simplified
 
 
+# Process-level compiled function cache to avoid redundant recompilation of identical networks
+_COMPILED_FN_CACHE = {}
+
+
+def _get_network_cache_key(engine, input_nodes, output_nodes, nodes_data):
+    data_sig = tuple(
+        (node, round(bias, 8), act_name, tuple((src, is_in, round(w, 8)) for src, is_in, w in links))
+        for node, bias, act_name, links in nodes_data
+    )
+    return (engine, tuple(input_nodes), tuple(output_nodes), data_sig)
+
+
 class OptimizedNetwork:
     """
     High-performance execution engine for static/champion NEAT feed-forward networks.
@@ -222,6 +234,11 @@ class OptimizedNetwork:
 
     def _compile_numba(self):
         """Generates a dedicated Numba JIT function for this network's DAG."""
+        cache_key = _get_network_cache_key("numba", self.input_nodes, self.output_nodes, self.nodes_data)
+        if cache_key in _COMPILED_FN_CACHE:
+            self._compiled_fn = _COMPILED_FN_CACHE[cache_key]
+            return
+
         lines = [
             "import numpy as np",
             "import math",
@@ -275,9 +292,15 @@ class OptimizedNetwork:
         # Warm up JIT compiler on a dummy zero array
         dummy = np.zeros(len(self.input_nodes), dtype=np.float64)
         self._compiled_fn(dummy)
+        _COMPILED_FN_CACHE[cache_key] = self._compiled_fn
 
     def _compile_python_unrolled(self):
         """Generates an unrolled pure Python function (4x-5x faster than FeedForwardNetwork)."""
+        cache_key = _get_network_cache_key("python_unrolled", self.input_nodes, self.output_nodes, self.nodes_data)
+        if cache_key in _COMPILED_FN_CACHE:
+            self._compiled_fn = _COMPILED_FN_CACHE[cache_key]
+            return
+
         lines = [
             "import math",
             "def _unrolled_eval(inputs):"
@@ -322,6 +345,7 @@ class OptimizedNetwork:
         code_str = "\n".join(lines)
         exec(code_str, scope)
         self._compiled_fn = scope["_unrolled_eval"]
+        _COMPILED_FN_CACHE[cache_key] = self._compiled_fn
 
     def activate(self, inputs):
         """

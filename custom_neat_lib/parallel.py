@@ -55,7 +55,7 @@ class ParallelEvaluator(object):
 
         # --- Evaluate genomes in parallel ---
         for ignored_genome_id, genome in genomes:
-            jobs.append(self.pool.apply_async(self.eval_function, (genome, config, arr_champions, generation_number)))
+            jobs.append(self.pool.apply_async(self.eval_function, (genome, config, champions_path, generation_number)))
 
         new_champion = None
         best_champ_fitness = -float('inf')
@@ -71,7 +71,8 @@ class ParallelEvaluator(object):
 
         # --- Save new champion and reorder leaderboard ---
         if new_champion:
-            new_champion.champ_num = len(arr_champions)
+            num_existing_champions = len(sorted_filenames)
+            new_champion.champ_num = num_existing_champions
             new_champion.is_champion = True
             opt_net = new_champion.generate_optimized_net()
 
@@ -82,7 +83,7 @@ class ParallelEvaluator(object):
             else:
                 print("    (Running with standard network)\n")
 
-            name_file = f"champ_{len(arr_champions)}.pickle"
+            name_file = f"champ_{num_existing_champions}.pickle"
             full_path = os.path.join(champions_path, name_file)
             with open(full_path, 'wb') as f:
                 pickle.dump(new_champion, f)
@@ -181,6 +182,9 @@ class ParallelEvaluator(object):
             # This is still needed for internal tracking, but won't be written to the file
             if not hasattr(bot, "record_champs") or reset_tournament_records:
                 bot.record_champs = [0, 0, 0]
+
+            if getattr(bot, "optimized_net", None) is None:
+                bot.generate_optimized_net()
 
             self.all_bots.append((bot.champ_num, bot, path))
 
