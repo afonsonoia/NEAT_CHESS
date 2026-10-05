@@ -1,29 +1,53 @@
 from custom_neat_lib.graphs import feed_forward_layers
 from custom_neat_lib.six_util import itervalues
+import numpy as np
 
 
 class FeedForwardNetwork(object):
     def __init__(self, inputs, outputs, node_evals):
-        self.input_nodes = inputs
-        self.output_nodes = outputs
+        self.input_nodes = list(inputs)
+        self.output_nodes = list(outputs)
         self.node_evals = node_evals
         self.values = dict((key, 0.0) for key in inputs + outputs)
+
+        # Pre-compile vectorized NumPy execution structures
+        all_keys = list(inputs)
+        for node, _, _, _, _, _ in node_evals:
+            if node not in all_keys:
+                all_keys.append(node)
+        self.key_to_idx = {k: idx for idx, k in enumerate(all_keys)}
+        self.n_total = len(all_keys)
+        self.n_inputs = len(inputs)
+        self.output_indices = [self.key_to_idx[k] for k in outputs]
+
+        self._vectorized_evals = []
+        for node, act, agg, bias, resp, links in node_evals:
+            node_idx = self.key_to_idx[node]
+            src_indices = np.array([self.key_to_idx[i] for i, _ in links], dtype=np.int32)
+            eff_weights = np.array([float(w * resp) for _, w in links], dtype=np.float64)
+            self._vectorized_evals.append((node_idx, float(bias), eff_weights, src_indices, act))
 
     def activate(self, inputs):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
 
-        for k, v in zip(self.input_nodes, inputs):
-            self.values[k] = v
+        vals = np.empty(self.n_total, dtype=np.float64)
+        vals[:self.n_inputs] = inputs
+        for node_idx, bias, weights, src_indices, act_func in self._vectorized_evals:
+            s = np.dot(weights, vals[src_indices])
+            vals[node_idx] = act_func(bias + s)
 
-        for node, act_func, agg_func, bias, response, links in self.node_evals:
-            node_inputs = []
-            for i, w in links:
-                node_inputs.append(self.values[i] * w)
-            s = agg_func(node_inputs)
-            self.values[node] = act_func(bias + response * s)
+        return [float(vals[i]) for i in self.output_indices]
 
-        return [self.values[i] for i in self.output_nodes]
+    def __getstate__(self):
+        return {
+            'input_nodes': self.input_nodes,
+            'output_nodes': self.output_nodes,
+            'node_evals': self.node_evals
+        }
+
+    def __setstate__(self, state):
+        self.__init__(state['input_nodes'], state['output_nodes'], state['node_evals'])
 
     @staticmethod
     def create(genome, config):

@@ -268,19 +268,17 @@ class Bot:
         for m in legal_moves:
             board.push(m)
 
-            outcome = board.outcome()
-            if outcome is not None:
-                # If it's a win for the bot, play immediately!
-                if outcome.winner is not None:
+            if board.is_check():
+                if board.is_checkmate():
                     board.pop()
                     return m
-                else:  # Draw (stalemate, repetition, etc.)
-                    points = 0.0
+                bot_input = self._get_board_input(board)
+                points = float(active_net.activate(bot_input)[0]) * my_color
+            elif board.is_insufficient_material() or board.is_stalemate():
+                points = 0.0
             else:
                 bot_input = self._get_board_input(board)
-                response_bot = float(active_net.activate(bot_input)[0])  # running NN (fast or normal)
-                response_bot *= my_color
-                points = response_bot
+                points = float(active_net.activate(bot_input)[0]) * my_color
 
             if DEBUG_MODE:
                 print(bot_input)
