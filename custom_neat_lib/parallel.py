@@ -73,7 +73,15 @@ class ParallelEvaluator(object):
         if new_champion:
             new_champion.champ_num = len(arr_champions)
             new_champion.is_champion = True
-            print("\nNEW CHAMPION\n")
+            opt_net = new_champion.generate_optimized_net()
+
+            print(f"\n[+] NEW CHAMPION DISCOVERED: champ_{new_champion.champ_num}")
+            if opt_net and hasattr(opt_net, "stats") and opt_net.stats:
+                s = opt_net.stats
+                print(f"    Optimization: Before: {s['raw_nodes']} nodes, {s['raw_conns']} connections | After: {s['opt_nodes']} nodes, {s['opt_conns']} connections\n")
+            else:
+                print("    (Running with standard network)\n")
+
             name_file = f"champ_{len(arr_champions)}.pickle"
             full_path = os.path.join(champions_path, name_file)
             with open(full_path, 'wb') as f:

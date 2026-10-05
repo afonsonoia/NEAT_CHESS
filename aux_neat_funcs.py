@@ -63,22 +63,32 @@ def get_numeric_board_ai(board_str=None, board=None):
 
     if board is not None or (board_str is not None and not isinstance(board_str, str) and hasattr(board_str, 'piece_at')):
         b = board if board is not None else board_str
-        # Direct coordinate mapping to match board.__str__() square order
-        for rank in range(7, -1, -1):
-            sq_row_offset = (7 - rank) * 8
-            for file in range(8):
-                sq = (rank << 3) | file
-                piece = b.piece_at(sq)
-                if piece:
-                    plane = PIECE_PLANE_INDICES.get(piece.symbol())
-                    if plane is not None:
-                        numeric_board[plane * 64 + (sq_row_offset + file)] = 1.0
+        import chess
+        # Fast bitboard extraction matching the square coordinate mapping:
+        # rank 7..0, file 0..7 => (7 - rank) * 8 + file == sq ^ 56
+        for pt in range(1, 7):
+            # White: planes 0..5
+            bb_w = b.pieces_mask(pt, chess.WHITE)
+            offset_w = (pt - 1) * 64
+            while bb_w:
+                sq = (bb_w & -bb_w).bit_length() - 1
+                bb_w &= bb_w - 1
+                numeric_board[offset_w + (sq ^ 56)] = 1.0
+
+            # Black: planes 6..11
+            bb_b = b.pieces_mask(pt, chess.BLACK)
+            offset_b = (pt + 5) * 64
+            while bb_b:
+                sq = (bb_b & -bb_b).bit_length() - 1
+                bb_b &= bb_b - 1
+                numeric_board[offset_b + (sq ^ 56)] = 1.0
+
         return numeric_board
 
     if board_str is None:
         return numeric_board
 
-    # Fast parsing directly from board_str
+    # Fast parsing directly from board_str (fallback)
     n = 0
     for k in board_str:
         if k == '\n' or k == ' ':

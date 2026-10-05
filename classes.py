@@ -217,6 +217,7 @@ class Bot:
         from custom_neat_lib.nn import FeedForwardNetwork
         net = FeedForwardNetwork.create(genome, config)
         self.net = net
+        self.optimized_net = None   # None for normal training bots; populated only for champions
         self.genome = genome
         self.config = config
         self.elo = 10.0             # Initial Elo of 10
@@ -225,17 +226,26 @@ class Bot:
         self.champ_num = None
         self.record_champs = [0, 0, 0]
 
-        # self.mem_hit_miss = [0, 0]
-        # self.max_memory_storage = 50000
-        # self.memory_amount = 0
-        # self.memory = {}
-        # self.mem_frequency = {}
+    def generate_optimized_net(self):
+        """
+        Generates an optimized, mathematically equivalent network for champions.
+        Leaves self.net intact and sets self.optimized_net.
+        """
+        try:
+            from fast_evaluator import OptimizedNetwork
+            self.optimized_net = OptimizedNetwork(self.net)
+            return self.optimized_net
+        except Exception as e:
+            print(f"Warning: Failed to generate optimized network: {e}")
+            self.optimized_net = None
+            return None
 
     def _get_board_input(self, board):
-        input_size = len(self.net.input_nodes) if hasattr(self, 'net') and hasattr(self.net, 'input_nodes') else 768
+        active_net = getattr(self, 'optimized_net', None) or self.net
+        input_size = len(active_net.input_nodes) if hasattr(active_net, 'input_nodes') else 768
         if input_size == 64:
             return get_numeric_board_ai_64(board.__str__())
-        return get_numeric_board_ai(board_str=board.__str__(), board=board)
+        return get_numeric_board_ai(board=board)
 
     def make_decision(self, board, my_color: int):  # my color: 1 -> white / -1 -> black
         if my_color == 0:
@@ -246,15 +256,14 @@ class Bot:
 
         DEBUG_MODE = False
 
-        best_move = [None, -999999]  # [move, points]
-        outputs_debug = []
-
         legal_moves = list(board.legal_moves)
         if not legal_moves:
             return None
 
         best_move = [legal_moves[0], -999999.0]  # [move, points]
         outputs_debug = []
+
+        active_net = getattr(self, 'optimized_net', None) or self.net
 
         for m in legal_moves:
             board.push(m)
@@ -271,7 +280,7 @@ class Bot:
                     points = 0.0
             else:
                 bot_input = self._get_board_input(board)
-                response_bot = float(self.net.activate(bot_input)[0])  # running NN
+                response_bot = float(active_net.activate(bot_input)[0])  # running NN (fast or normal)
                 response_bot *= my_color
                 points = response_bot
 
@@ -311,7 +320,8 @@ class Bot:
                 return 0
 
         bot_input = self._get_board_input(board)
-        response_bot = float(self.net.activate(bot_input)[0])  # NN gives score from White's POV
+        active_net = getattr(self, 'optimized_net', None) or self.net
+        response_bot = float(active_net.activate(bot_input)[0])  # NN gives score from White's POV
 
         # Convert score to bot's perspective
         response_bot *= my_color
