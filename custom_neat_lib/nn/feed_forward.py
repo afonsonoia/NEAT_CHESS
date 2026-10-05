@@ -12,9 +12,16 @@ class FeedForwardNetwork(object):
 
         # Pre-compile vectorized NumPy execution structures
         all_keys = list(inputs)
-        for node, _, _, _, _, _ in node_evals:
+        for k in outputs:
+            if k not in all_keys:
+                all_keys.append(k)
+        for node, _, _, _, _, links in node_evals:
             if node not in all_keys:
                 all_keys.append(node)
+            for i, _ in links:
+                if i not in all_keys:
+                    all_keys.append(i)
+
         self.key_to_idx = {k: idx for idx, k in enumerate(all_keys)}
         self.n_total = len(all_keys)
         self.n_inputs = len(inputs)
@@ -31,7 +38,7 @@ class FeedForwardNetwork(object):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
 
-        vals = np.empty(self.n_total, dtype=np.float64)
+        vals = np.zeros(self.n_total, dtype=np.float64)
         vals[:self.n_inputs] = inputs
         for node_idx, bias, weights, src_indices, act_func in self._vectorized_evals:
             s = np.dot(weights, vals[src_indices])
