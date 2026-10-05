@@ -59,15 +59,15 @@ class Population(object):
 
         # ----- chess advancements -----
 
-        # prepare oscillators
-        self.original_population_size = 200         # self.config.pop_size
-        self.original_conn_add_prob = 0.15          # self.config.genome_config.conn_add_prob
-        self.original_conn_delete_prob = 0.12        # self.config.genome_config.conn_delete_prob
-        self.original_node_add_prob = 0.15          # self.config.genome_config.node_add_prob
-        self.original_node_delete_prob = 0.12        # self.config.genome_config.node_delete_prob
-        self.original_weight_mutate_power = 0.1    # self.config.genome_config.weight_mutate_power
-        self.original_response_mutate_power = 0.1  # self.config.genome_config.response_mutate_power
-        self.original_bias_mutate_power = 0.1      # self.config.genome_config.bias_mutate_power
+        # prepare oscillators (dynamically initialized from config)
+        self.original_population_size = self.config.pop_size
+        self.original_conn_add_prob = self.config.genome_config.conn_add_prob
+        self.original_conn_delete_prob = self.config.genome_config.conn_delete_prob
+        self.original_node_add_prob = self.config.genome_config.node_add_prob
+        self.original_node_delete_prob = self.config.genome_config.node_delete_prob
+        self.original_weight_mutate_power = self.config.genome_config.weight_mutate_power
+        self.original_response_mutate_power = self.config.genome_config.response_mutate_power
+        self.original_bias_mutate_power = self.config.genome_config.bias_mutate_power
 
         # ------------------------------
 
