@@ -1,15 +1,16 @@
 from __main import aux_single_game
 import os
 import pickle
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from datetime import datetime
 
-# ================= CONFIG =================
-BOT_NUMBER = 25
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHAMPIONS_DIR = os.path.join(BASE_DIR, "champions")
+available = [int(f.split('_')[1].split('.')[0]) for f in os.listdir(CHAMPIONS_DIR) if f.startswith('champ_') and f.endswith('.pickle')] if os.path.exists(CHAMPIONS_DIR) else []
+BOT_NUMBER = min(25, max(available)) if available else 0
 ELO_PATH = os.path.join(BASE_DIR, "leaderboard_elo.txt")
 PLOTS_ROOT_DIR = os.path.join(BASE_DIR, "bot_analisys_plots")
 # =========================================

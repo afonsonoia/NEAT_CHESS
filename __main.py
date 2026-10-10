@@ -12,6 +12,7 @@ from classes import Bot, get_numeric_board_pawns_calculation
 # Worker-level champions cache to eliminate IPC pickling/unpickling overhead
 _WORKER_CHAMPIONS_CACHE = {
     'path': None,
+    'dir_mtime': None,
     'mtime_sig': None,
     'champions': []
 }
@@ -31,6 +32,19 @@ def get_cached_champions(champions_source):
     if not os.path.exists(champions_path):
         return []
 
+    try:
+        dir_mtime = os.path.getmtime(champions_path)
+    except OSError:
+        dir_mtime = None
+
+    if (
+        _WORKER_CHAMPIONS_CACHE['path'] == champions_path
+        and dir_mtime is not None
+        and _WORKER_CHAMPIONS_CACHE.get('dir_mtime') == dir_mtime
+        and _WORKER_CHAMPIONS_CACHE['champions']
+    ):
+        return _WORKER_CHAMPIONS_CACHE['champions']
+
     # Get list of champion files with their modification times
     files = [f for f in os.listdir(champions_path) if f.startswith('champ_') and f.endswith('.pickle')]
     files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
@@ -42,6 +56,7 @@ def get_cached_champions(champions_source):
         and _WORKER_CHAMPIONS_CACHE['mtime_sig'] == mtime_sig
         and _WORKER_CHAMPIONS_CACHE['champions']
     ):
+        _WORKER_CHAMPIONS_CACHE['dir_mtime'] = dir_mtime
         return _WORKER_CHAMPIONS_CACHE['champions']
 
     loaded_champions = []
@@ -57,6 +72,7 @@ def get_cached_champions(champions_source):
             print(f"[Worker] Error loading champion {f}: {e}")
 
     _WORKER_CHAMPIONS_CACHE['path'] = champions_path
+    _WORKER_CHAMPIONS_CACHE['dir_mtime'] = dir_mtime
     _WORKER_CHAMPIONS_CACHE['mtime_sig'] = mtime_sig
     _WORKER_CHAMPIONS_CACHE['champions'] = loaded_champions
     return loaded_champions
@@ -239,23 +255,33 @@ def aux_single_game(bot1, bot2, record_game: bool, alt_record_path=False):
     else:
         path_records = "_pgns_to_merge"
 
-    while not board.outcome():
+    while True:
+        bot = bot1 if board.turn else bot2
+        color = 1 if board.turn else -1
+        m = bot.make_decision(board, my_color=color)
+        if m is None:
+            break
         if board.turn:
             n_moves += 1
-            board.push(bot1.make_decision(board, my_color=1))
-        else:
-            board.push(bot2.make_decision(board, my_color=-1))
+        board.push(m)
+        if board.is_seventyfive_moves() or board.is_fivefold_repetition() or (board.occupied.bit_count() <= 4 and board.is_insufficient_material()):
+            break
 
+    outcome = board.outcome()
     result = None
-    draw_diff_pieces_in_pawns = 0
+    draw_diff_pieces_in_pawns = 0.0
 
-    if board.outcome().winner is None:
+    if outcome.winner is None:
         result = 0
-        numeric_board = get_numeric_board_pawns_calculation(board.__str__())
-        for val in numeric_board:
-            draw_diff_pieces_in_pawns += val
+        pw = board.pieces_mask(chess.PAWN, chess.WHITE).bit_count() - board.pieces_mask(chess.PAWN, chess.BLACK).bit_count()
+        nw = board.pieces_mask(chess.KNIGHT, chess.WHITE).bit_count() - board.pieces_mask(chess.KNIGHT, chess.BLACK).bit_count()
+        bw = board.pieces_mask(chess.BISHOP, chess.WHITE).bit_count() - board.pieces_mask(chess.BISHOP, chess.BLACK).bit_count()
+        rw = board.pieces_mask(chess.ROOK, chess.WHITE).bit_count() - board.pieces_mask(chess.ROOK, chess.BLACK).bit_count()
+        qw = board.pieces_mask(chess.QUEEN, chess.WHITE).bit_count() - board.pieces_mask(chess.QUEEN, chess.BLACK).bit_count()
+        kw = board.pieces_mask(chess.KING, chess.WHITE).bit_count() - board.pieces_mask(chess.KING, chess.BLACK).bit_count()
+        draw_diff_pieces_in_pawns = pw * 0.1 + nw * 0.32 + bw * 0.333 + rw * 0.51 + qw * 0.92 + kw * 1.0
 
-    elif board.outcome().winner:
+    elif outcome.winner:
         result = 1
     else:
         result = -1
@@ -447,7 +473,7 @@ if __name__ == "__main__":
         try:
             lastBackupPath = get_last_backup_path()
             if lastBackupPath is not None:
-                pop = restore_checkpoint(lastBackupPath, champions_arr_path=path_champions)
+                pop = restore_checkpoint(lastBackupPath, champions_arr_path=path_champions, config=config)
                 print("continuing from backup:", lastBackupPath)
             else:
                 print("No backups found, starting new population")

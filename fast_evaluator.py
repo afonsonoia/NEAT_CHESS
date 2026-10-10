@@ -8,6 +8,71 @@ except ImportError:
     HAS_NUMBA = False
 
 
+ACT_NAME_TO_INT = {
+    'tanh': 0,
+    'relu': 1,
+    'identity': 2,
+    'sigmoid': 3,
+    'clamped': 4
+}
+
+
+def _act_tanh(z):
+    _s = max(-60.0, min(60.0, 2.5 * z))
+    return math.tanh(_s)
+
+
+def _act_relu(z):
+    return max(0.0, z)
+
+
+def _act_identity(z):
+    return z
+
+
+def _act_sigmoid(z):
+    _s = max(-60.0, min(60.0, 5.0 * z))
+    return 1.0 / (1.0 + math.exp(-_s))
+
+
+def _act_clamped(z):
+    return max(-1.0, min(1.0, z))
+
+
+if HAS_NUMBA:
+    @numba.njit(fastmath=True)
+    def _numba_feedforward_eval(inputs, node_biases, node_acts, in_idx_flat, in_w_flat, in_ptrs, hid_idx_flat, hid_w_flat, hid_ptrs, out_indices):
+        n_nodes = len(node_biases)
+        node_vals = np.zeros(n_nodes, dtype=np.float64)
+        for i in range(n_nodes):
+            s = 0.0
+            for k in range(in_ptrs[i], in_ptrs[i+1]):
+                s += inputs[in_idx_flat[k]] * in_w_flat[k]
+            for k in range(hid_ptrs[i], hid_ptrs[i+1]):
+                s += node_vals[hid_idx_flat[k]] * hid_w_flat[k]
+            z = node_biases[i] + s
+            act = node_acts[i]
+            if act == 0:
+                _s = max(-60.0, min(60.0, 2.5 * z))
+                node_vals[i] = math.tanh(_s)
+            elif act == 1:
+                node_vals[i] = max(0.0, z)
+            elif act == 2:
+                node_vals[i] = z
+            elif act == 3:
+                _s = max(-60.0, min(60.0, 5.0 * z))
+                node_vals[i] = 1.0 / (1.0 + math.exp(-_s))
+            elif act == 4:
+                node_vals[i] = max(-1.0, min(1.0, z))
+            else:
+                node_vals[i] = max(0.0, z)
+
+        out = np.zeros(len(out_indices), dtype=np.float64)
+        for idx in range(len(out_indices)):
+            out[idx] = node_vals[out_indices[idx]]
+        return out
+
+
 def simplify_graph(nodes_data, output_nodes, inputs_non_negative=False):
     """
     Applies pure algebraic graph rewrites and operator fusions to a static NEAT DAG:
@@ -216,6 +281,29 @@ class OptimizedNetwork:
                 "opt_conns": opt_conns_count
             }
 
+            # Fast-path for single direct output node connected solely to inputs
+            self._is_single_direct = False
+            if len(self.output_nodes) == 1 and len(self.nodes_data) == 1:
+                node, bias, act_name, links = self.nodes_data[0]
+                if node == self.output_nodes[0] and (len(links) == 0 or all(is_in for _, is_in, _ in links)):
+                    self._is_single_direct = True
+                    self._dense_weights = np.zeros(len(self.input_nodes), dtype=np.float64)
+                    for src, is_in, w in links:
+                        self._dense_weights[src] = w
+                    self._single_bias = float(bias)
+                    if "tanh" in act_name:
+                        self._single_act = _act_tanh
+                    elif "relu" in act_name:
+                        self._single_act = _act_relu
+                    elif "identity" in act_name:
+                        self._single_act = _act_identity
+                    elif "sigmoid" in act_name:
+                        self._single_act = _act_sigmoid
+                    elif "clamped" in act_name:
+                        self._single_act = _act_clamped
+                    else:
+                        self._single_act = _act_relu
+
             self._compile()
 
     def _compile(self):
@@ -233,66 +321,49 @@ class OptimizedNetwork:
         self._engine = "python_unrolled"
 
     def _compile_numba(self):
-        """Generates a dedicated Numba JIT function for this network's DAG."""
-        cache_key = _get_network_cache_key("numba", self.input_nodes, self.output_nodes, self.nodes_data)
-        if cache_key in _COMPILED_FN_CACHE:
-            self._compiled_fn = _COMPILED_FN_CACHE[cache_key]
-            return
+        """Prepares CSR flat arrays and binds the generic parameterized Numba JIT kernel."""
+        nodes_data = self.nodes_data
+        node_to_idx = {node: idx for idx, (node, _, _, _) in enumerate(nodes_data)}
+        biases = np.array([nd[1] for nd in nodes_data], dtype=np.float64)
+        acts = []
+        for nd in nodes_data:
+            code = 1
+            for k, v in ACT_NAME_TO_INT.items():
+                if k in nd[2]:
+                    code = v
+                    break
+            acts.append(code)
+        acts = np.array(acts, dtype=np.int32)
 
-        lines = [
-            "import numpy as np",
-            "import math",
-            "@numba.njit(fastmath=True)",
-            "def _numba_eval(inputs):"
-        ]
+        in_idx_flat, in_w_flat, in_ptrs = [], [], [0]
+        hid_idx_flat, hid_w_flat, hid_ptrs = [], [], [0]
+        for nd in nodes_data:
+            for src, is_in, w in nd[3]:
+                if is_in:
+                    in_idx_flat.append(src)
+                    in_w_flat.append(w)
+                elif src in node_to_idx:
+                    hid_idx_flat.append(node_to_idx[src])
+                    hid_w_flat.append(w)
+            in_ptrs.append(len(in_idx_flat))
+            hid_ptrs.append(len(hid_idx_flat))
 
-        eval_node_ids = set(node for node, _, _, _ in self.nodes_data)
-        
-        # Pre-initialize any output nodes not evaluated in DAG to 0.0
-        for o in self.output_nodes:
-            if o not in eval_node_ids:
-                lines.append(f"    v_{o} = 0.0")
+        in_idx_flat = np.array(in_idx_flat, dtype=np.int32)
+        in_w_flat = np.array(in_w_flat, dtype=np.float64)
+        in_ptrs = np.array(in_ptrs, dtype=np.int32)
+        hid_idx_flat = np.array(hid_idx_flat, dtype=np.int32)
+        hid_w_flat = np.array(hid_w_flat, dtype=np.float64)
+        hid_ptrs = np.array(hid_ptrs, dtype=np.int32)
+        out_idx = np.array([node_to_idx[o] for o in self.output_nodes if o in node_to_idx], dtype=np.int32)
 
-        for node, bias, act_name, links in self.nodes_data:
-            terms = []
-            for src, is_input, eff_w in links:
-                if is_input:
-                    terms.append(f"inputs[{src}] * {eff_w!r}")
-                elif src in eval_node_ids:
-                    terms.append(f"v_{src} * {eff_w!r}")
-                else:
-                    terms.append(f"0.0")  # un-evaluated node defaults to 0.0
-            expr = " + ".join(terms) if terms else "0.0"
-            lines.append(f"    z_{node} = {bias!r} + ({expr})")
-
-            # Inline activation function
-            if "relu" in act_name:
-                lines.append(f"    v_{node} = max(0.0, z_{node})")
-            elif "identity" in act_name:
-                lines.append(f"    v_{node} = z_{node}")
-            elif "sigmoid" in act_name:
-                lines.append(f"    _s = max(-60.0, min(60.0, 5.0 * z_{node}))")
-                lines.append(f"    v_{node} = 1.0 / (1.0 + math.exp(-_s))")
-            elif "tanh" in act_name:
-                lines.append(f"    _s = max(-60.0, min(60.0, 2.5 * z_{node}))")
-                lines.append(f"    v_{node} = math.tanh(_s)")
-            elif "clamped" in act_name:
-                lines.append(f"    v_{node} = max(-1.0, min(1.0, z_{node}))")
-            else:
-                lines.append(f"    v_{node} = max(0.0, z_{node})")
-
-        out_vars = [f"v_{o}" for o in self.output_nodes]
-        lines.append(f"    return np.array([{', '.join(out_vars)}], dtype=np.float64)")
-
-        scope = {"numba": numba, "np": np, "math": math}
-        code_str = "\n".join(lines)
-        exec(code_str, scope)
-        self._compiled_fn = scope["_numba_eval"]
+        def _eval_runner(inp):
+            inp_arr = np.asarray(inp, dtype=np.float64)
+            return _numba_feedforward_eval(inp_arr, biases, acts, in_idx_flat, in_w_flat, in_ptrs, hid_idx_flat, hid_w_flat, hid_ptrs, out_idx)
 
         # Warm up JIT compiler on a dummy zero array
         dummy = np.zeros(len(self.input_nodes), dtype=np.float64)
-        self._compiled_fn(dummy)
-        _COMPILED_FN_CACHE[cache_key] = self._compiled_fn
+        _eval_runner(dummy)
+        self._compiled_fn = _eval_runner
 
     def _compile_python_unrolled(self):
         """Generates an unrolled pure Python function (4x-5x faster than FeedForwardNetwork)."""

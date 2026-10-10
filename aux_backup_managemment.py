@@ -37,16 +37,19 @@ def get_last_backup_path(folder_path=BACKUP_FOLDER):
     return backups[-1][1]  # Return the path of the backup with the largest N
 
 
-def restore_checkpoint(filename, champions_arr_path):
+def restore_checkpoint(filename, champions_arr_path, config=None):
     import gzip
     import pickle
     import random
     from custom_neat_lib import Population
     """Resumes the simulation from a previous saved point."""
     with gzip.open(filename) as f:
-        generation, config, population, species_set, rndstate = pickle.load(f)
+        generation, saved_config, population, species_set, rndstate = pickle.load(f)
         generation += 1  # making new generation
         random.setstate(rndstate)
-        return Population(config, (population, species_set, generation), champions_arr_path)
+        active_config = config if config is not None else saved_config
+        if config is not None and hasattr(saved_config, 'pop_size'):
+            active_config.pop_size = config.pop_size
+        return Population(active_config, (population, species_set, generation), champions_arr_path)
 
 

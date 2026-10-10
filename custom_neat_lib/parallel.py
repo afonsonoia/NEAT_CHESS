@@ -37,8 +37,7 @@ class ParallelEvaluator(object):
         jobs = []
         new_champion = None
 
-        # --- Load all existing champions ---
-        arr_champions = []
+        # --- Count existing champions ---
         aux_files_arr = []
 
         os.makedirs(champions_path, exist_ok=True)
@@ -49,9 +48,6 @@ class ParallelEvaluator(object):
                 aux_files_arr.append((n, os.path.join(champions_path, filename)))
 
         sorted_filenames = sorted(aux_files_arr, key=lambda x: x[0])
-        for _, file_path in sorted_filenames:
-            with open(file_path, 'rb') as f:
-                arr_champions.append(pickle.load(f))
 
         # --- Evaluate genomes in parallel ---
         for ignored_genome_id, genome in genomes:

@@ -1,5 +1,6 @@
 import time
 import math
+import chess
 from aux_neat_funcs import *
 
 
@@ -254,48 +255,214 @@ class Bot:
             sleep(5)
             exit()
 
-        DEBUG_MODE = False
-
         legal_moves = list(board.legal_moves)
         if not legal_moves:
             return None
 
-        best_move = [legal_moves[0], -999999.0]  # [move, points]
-        outputs_debug = []
+        best_move = legal_moves[0]
+        best_points = -999999.0
 
         active_net = getattr(self, 'optimized_net', None) or self.net
+        occ_total = board.occupied.bit_count()
+        input_size = len(active_net.input_nodes) if hasattr(active_net, 'input_nodes') else 768
+        is_64 = (input_size == 64)
+
+        use_delta = (not is_64) and getattr(active_net, '_is_single_direct', False)
+
+        if use_delta:
+            dense_w = active_net._dense_weights
+            dense_bias = active_net._single_bias
+            dense_act = active_net._single_act
+            buf = get_numeric_board_ai(board=board)
+            base_s = float(np.dot(dense_w, buf))
+        elif is_64:
+            buf = get_numeric_board_ai_64(board=board).copy()
+        else:
+            buf = get_numeric_board_ai(board=board).copy()
+
+        # Precompute check and terminal filters for the current board
+        turn = board.turn
+        enemy_color = not turn
+        enemy_king = board.king(enemy_color)
+        our_co = board.occupied_co[turn]
+        our_rooks_queens = (board.rooks | board.queens) & our_co
+        our_bishops_queens = (board.bishops | board.queens) & our_co
+
+        rook_rays = chess.BB_RANK_ATTACKS[enemy_king][0] | chess.BB_FILE_ATTACKS[enemy_king][0]
+        bishop_rays = chess.BB_DIAG_ATTACKS[enemy_king][0]
+
+        slider_discovered_rays = 0
+        if our_rooks_queens & rook_rays:
+            slider_discovered_rays |= rook_rays
+        if our_bishops_queens & bishop_rays:
+            slider_discovered_rays |= bishop_rays
+
+        knight_attacks = chess.BB_KNIGHT_ATTACKS[enemy_king]
+        pawn_attacks = chess.BB_PAWN_ATTACKS[enemy_color][enemy_king]
+        has_castling = board.has_castling_rights(turn)
+        ep_sq = board.ep_square
+        opp_pieces_count = board.occupied_co[enemy_color].bit_count()
+        draw_risk = (occ_total <= 4) or (opp_pieces_count <= 3)
 
         for m in legal_moves:
-            board.push(m)
+            pt = board.piece_type_at(m.from_square)
+            color = turn
+            dest_pt = m.promotion if m.promotion else pt
+            is_ep = (ep_sq == m.to_square and pt == chess.PAWN)
+            is_castling = (pt == chess.KING and has_castling and board.is_castling(m))
 
-            if board.is_check():
-                if board.is_checkmate():
+            can_check = True
+            if not m.promotion and not is_castling and not is_ep:
+                from_bb = 1 << m.from_square
+                if not (from_bb & slider_discovered_rays):
+                    to_bb = 1 << m.to_square
+                    if pt == chess.KNIGHT:
+                        can_check = bool(to_bb & knight_attacks)
+                    elif pt == chess.PAWN:
+                        can_check = bool(to_bb & pawn_attacks)
+                    elif pt == chess.KING:
+                        can_check = False
+                    elif pt == chess.BISHOP:
+                        can_check = bool(to_bb & bishop_rays)
+                    elif pt == chess.ROOK:
+                        can_check = bool(to_bb & rook_rays)
+                    else:
+                        can_check = bool(to_bb & (bishop_rays | rook_rays))
+
+            if use_delta:
+                off_from = ((pt - 1) if color else (pt + 5)) * 64
+                off_to = ((dest_pt - 1) if color else (dest_pt + 5)) * 64
+                delta = dense_w[off_to + (m.to_square ^ 56)] - dense_w[off_from + (m.from_square ^ 56)]
+
+                if is_ep:
+                    ep_sq_val = m.to_square + (-8 if color else 8)
+                    delta -= dense_w[(6 if color else 0) * 64 + (ep_sq_val ^ 56)]
+                elif board.occupied & (1 << m.to_square):
+                    cap_pt = board.piece_type_at(m.to_square)
+                    cap_off = ((cap_pt - 1) if enemy_color else (cap_pt + 5)) * 64
+                    delta -= dense_w[cap_off + (m.to_square ^ 56)]
+                elif is_castling:
+                    if m.to_square == chess.G1:
+                        delta += dense_w[3 * 64 + (chess.F1 ^ 56)] - dense_w[3 * 64 + (chess.H1 ^ 56)]
+                    elif m.to_square == chess.C1:
+                        delta += dense_w[3 * 64 + (chess.D1 ^ 56)] - dense_w[3 * 64 + (chess.A1 ^ 56)]
+                    elif m.to_square == chess.G8:
+                        delta += dense_w[9 * 64 + (chess.F8 ^ 56)] - dense_w[9 * 64 + (chess.H8 ^ 56)]
+                    elif m.to_square == chess.C8:
+                        delta += dense_w[9 * 64 + (chess.D8 ^ 56)] - dense_w[9 * 64 + (chess.A8 ^ 56)]
+
+                if can_check or draw_risk:
+                    board.push(m)
+                    if board.is_check():
+                        if board.is_checkmate():
+                            board.pop()
+                            return m
+                        points = float(dense_act(dense_bias + (base_s + delta))) * my_color
+                    elif (occ_total <= 4 and board.is_insufficient_material()) or (board.occupied_co[board.turn].bit_count() <= 3 and board.is_stalemate()):
+                        points = 0.0
+                    else:
+                        points = float(dense_act(dense_bias + (base_s + delta))) * my_color
                     board.pop()
-                    return m
-                bot_input = self._get_board_input(board)
-                points = float(active_net.activate(bot_input)[0]) * my_color
-            elif board.is_insufficient_material() or board.is_stalemate():
-                points = 0.0
+                else:
+                    points = float(dense_act(dense_bias + (base_s + delta))) * my_color
+
             else:
-                bot_input = self._get_board_input(board)
-                points = float(active_net.activate(bot_input)[0]) * my_color
+                # General buffer-based path for non-direct networks or 64-input models
+                if is_64:
+                    idx_from = m.from_square ^ 56
+                    idx_to = m.to_square ^ 56
+                    old_to = buf[idx_to]
+                    val = PIECE_VALUES_64[dest_pt] if color else -PIECE_VALUES_64[dest_pt]
+                    buf[idx_from] = 0.0
+                    buf[idx_to] = val
+                    if is_ep:
+                        ep_sq_idx = (m.to_square + (-8 if color else 8)) ^ 56
+                        old_ep = buf[ep_sq_idx]
+                        buf[ep_sq_idx] = 0.0
+                    elif is_castling:
+                        if m.to_square == chess.G1:
+                            rf, rt, rv = chess.H1 ^ 56, chess.F1 ^ 56, PIECE_VALUES_64[chess.ROOK]
+                        elif m.to_square == chess.C1:
+                            rf, rt, rv = chess.A1 ^ 56, chess.D1 ^ 56, PIECE_VALUES_64[chess.ROOK]
+                        elif m.to_square == chess.G8:
+                            rf, rt, rv = chess.H8 ^ 56, chess.F8 ^ 56, -PIECE_VALUES_64[chess.ROOK]
+                        elif m.to_square == chess.C8:
+                            rf, rt, rv = chess.A8 ^ 56, chess.D8 ^ 56, -PIECE_VALUES_64[chess.ROOK]
+                        buf[rf] = 0.0
+                        buf[rt] = rv
+                else:
+                    off_from = ((pt - 1) if color else (pt + 5)) * 64
+                    off_to = ((dest_pt - 1) if color else (dest_pt + 5)) * 64
+                    idx_from = off_from + (m.from_square ^ 56)
+                    idx_to = off_to + (m.to_square ^ 56)
+                    buf[idx_from] = 0.0
 
-            if DEBUG_MODE:
-                print(bot_input)
-                print(points)
+                    cap_idx = None
+                    ep_idx = None
+                    if is_ep:
+                        ep_sq_val = m.to_square + (-8 if color else 8)
+                        ep_off = (6 if color else 0) * 64
+                        ep_idx = ep_off + (ep_sq_val ^ 56)
+                        buf[ep_idx] = 0.0
+                    elif board.occupied & (1 << m.to_square):
+                        cap_pt = board.piece_type_at(m.to_square)
+                        cap_off = ((cap_pt - 1) if enemy_color else (cap_pt + 5)) * 64
+                        cap_idx = cap_off + (m.to_square ^ 56)
+                        buf[cap_idx] = 0.0
+                    elif is_castling:
+                        if m.to_square == chess.G1:
+                            rf_idx, rt_idx = 3 * 64 + (chess.H1 ^ 56), 3 * 64 + (chess.F1 ^ 56)
+                        elif m.to_square == chess.C1:
+                            rf_idx, rt_idx = 3 * 64 + (chess.A1 ^ 56), 3 * 64 + (chess.D1 ^ 56)
+                        elif m.to_square == chess.G8:
+                            rf_idx, rt_idx = 9 * 64 + (chess.H8 ^ 56), 9 * 64 + (chess.F8 ^ 56)
+                        elif m.to_square == chess.C8:
+                            rf_idx, rt_idx = 9 * 64 + (chess.A8 ^ 56), 9 * 64 + (chess.D8 ^ 56)
+                        buf[rf_idx] = 0.0
+                        buf[rt_idx] = 1.0
 
-            if not (isinstance(points, (float, int)) or (isinstance(points, np.number) and not np.isnan(points))):
-                print("Weird Error")
-                print(points)
-                exit()
+                    buf[idx_to] = 1.0
 
-            outputs_debug.append(points)
-            if points > best_move[1]:
-                best_move[0] = m
-                best_move[1] = points
-            board.pop()
+                if can_check or draw_risk:
+                    board.push(m)
+                    if board.is_check():
+                        if board.is_checkmate():
+                            board.pop()
+                            return m
+                        points = float(active_net.activate(buf)[0]) * my_color
+                    elif (occ_total <= 4 and board.is_insufficient_material()) or (board.occupied_co[board.turn].bit_count() <= 3 and board.is_stalemate()):
+                        points = 0.0
+                    else:
+                        points = float(active_net.activate(buf)[0]) * my_color
+                    board.pop()
+                else:
+                    points = float(active_net.activate(buf)[0]) * my_color
 
-        return best_move[0]
+                # Revert delta on buffer
+                if is_64:
+                    buf[idx_from] = val if not m.promotion else (PIECE_VALUES_64[chess.PAWN] if color else -PIECE_VALUES_64[chess.PAWN])
+                    buf[idx_to] = old_to
+                    if is_ep:
+                        buf[ep_sq_idx] = old_ep
+                    elif is_castling:
+                        buf[rf] = rv
+                        buf[rt] = 0.0
+                else:
+                    buf[idx_from] = 1.0
+                    buf[idx_to] = 0.0
+                    if ep_idx is not None:
+                        buf[ep_idx] = 1.0
+                    elif cap_idx is not None:
+                        buf[cap_idx] = 1.0
+                    elif is_castling:
+                        buf[rf_idx] = 1.0
+                        buf[rt_idx] = 0.0
+
+            if points > best_points:
+                best_points = points
+                best_move = m
+
+        return best_move
 
 
     # This function is required for alpha-beta search.

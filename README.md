@@ -153,7 +153,7 @@ Core evolution parameters are configured in `_chess_config.txt`:
 
 | Section | Parameter | Default | Description |
 |---|---|---|---|
-| `[NEAT]` | `pop_size` | `200` | Population size (oscillates $\pm 30\%$ dynamically) |
+| `[NEAT]` | `pop_size` | `1000` | Population size (oscillates $\pm 30\%$ dynamically) |
 | `[NEAT]` | `fitness_threshold` | `10000` | Termination fitness threshold |
 | `[DefaultGenome]` | `num_inputs` | `768` | 12 piece planes $\times$ 64 squares |
 | `[DefaultGenome]` | `num_outputs` | `1` | Scalar position evaluation |

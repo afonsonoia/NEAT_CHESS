@@ -2,10 +2,12 @@ from __main import aux_single_game
 import os
 import pickle
 
-# Total number of bots (0 through 115 inclusive)
-BOT_NUMBER = 48
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 path_champions = os.path.join(BASE_DIR, "champions")
+
+# Total number of bots to evaluate (capped to existing champions)
+available = [int(f.split('_')[1].split('.')[0]) for f in os.listdir(path_champions) if f.startswith('champ_') and f.endswith('.pickle')] if os.path.exists(path_champions) else []
+BOT_NUMBER = min(48, max(available)) if available else 0
 
 # Load all bots
 all_bots = []

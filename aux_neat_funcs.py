@@ -42,14 +42,24 @@ def get_numeric_board_ai_64(board_str=None, board=None):
     if board is not None or (board_str is not None and not isinstance(board_str, str) and hasattr(board_str, 'pieces_mask')):
         b = board if board is not None else board_str
         numeric_board = np.zeros(64, dtype=float)
-        for pt, val in PIECE_VALUES_64.items():
-            bb_w = b.pieces_mask(pt, chess.WHITE)
+        w_occ = b.occupied_co[chess.WHITE]
+        b_occ = b.occupied_co[chess.BLACK]
+        pieces = (
+            (b.pawns, PIECE_VALUES_64[chess.PAWN]),
+            (b.knights, PIECE_VALUES_64[chess.KNIGHT]),
+            (b.bishops, PIECE_VALUES_64[chess.BISHOP]),
+            (b.rooks, PIECE_VALUES_64[chess.ROOK]),
+            (b.queens, PIECE_VALUES_64[chess.QUEEN]),
+            (b.kings, PIECE_VALUES_64[chess.KING])
+        )
+        for p_bb, val in pieces:
+            bb_w = p_bb & w_occ
             while bb_w:
                 sq = (bb_w & -bb_w).bit_length() - 1
                 bb_w &= bb_w - 1
                 numeric_board[sq ^ 56] = val
 
-            bb_b = b.pieces_mask(pt, chess.BLACK)
+            bb_b = p_bb & b_occ
             while bb_b:
                 sq = (bb_b & -bb_b).bit_length() - 1
                 bb_b &= bb_b - 1
@@ -99,20 +109,22 @@ def get_numeric_board_ai(board_str=None, board=None):
 
     if board is not None or (board_str is not None and not isinstance(board_str, str) and hasattr(board_str, 'piece_at')):
         b = board if board is not None else board_str
-        # Fast bitboard extraction matching the square coordinate mapping:
-        # rank 7..0, file 0..7 => (7 - rank) * 8 + file == sq ^ 56
-        for pt in range(1, 7):
+        w_occ = b.occupied_co[chess.WHITE]
+        b_occ = b.occupied_co[chess.BLACK]
+        pieces = (b.pawns, b.knights, b.bishops, b.rooks, b.queens, b.kings)
+
+        for pt_idx, p_bb in enumerate(pieces):
             # White: planes 0..5
-            bb_w = b.pieces_mask(pt, chess.WHITE)
-            offset_w = (pt - 1) * 64
+            bb_w = p_bb & w_occ
+            offset_w = pt_idx * 64
             while bb_w:
                 sq = (bb_w & -bb_w).bit_length() - 1
                 bb_w &= bb_w - 1
                 numeric_board[offset_w + (sq ^ 56)] = 1.0
 
             # Black: planes 6..11
-            bb_b = b.pieces_mask(pt, chess.BLACK)
-            offset_b = (pt + 5) * 64
+            bb_b = p_bb & b_occ
+            offset_b = (pt_idx + 6) * 64
             while bb_b:
                 sq = (bb_b & -bb_b).bit_length() - 1
                 bb_b &= bb_b - 1

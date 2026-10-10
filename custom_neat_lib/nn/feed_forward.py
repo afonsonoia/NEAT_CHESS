@@ -34,11 +34,29 @@ class FeedForwardNetwork(object):
             eff_weights = np.array([float(w * resp) for _, w in links], dtype=np.float64)
             self._vectorized_evals.append((node_idx, float(bias), eff_weights, src_indices, act))
 
+        # Fast path: single direct output node connected solely to input nodes
+        self._is_single_direct = False
+        if len(self.output_indices) == 1 and len(self._vectorized_evals) == 1:
+            node_idx, bias, eff_weights, src_indices, act = self._vectorized_evals[0]
+            if node_idx == self.output_indices[0] and (len(src_indices) == 0 or np.all(src_indices < self.n_inputs)):
+                self._is_single_direct = True
+                self._dense_weights = np.zeros(self.n_inputs, dtype=np.float64)
+                if len(src_indices) > 0:
+                    self._dense_weights[src_indices] = eff_weights
+                self._single_bias = bias
+                self._single_act = act
+
+        self._vals = np.zeros(self.n_total, dtype=np.float64)
+
     def activate(self, inputs):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
 
-        vals = np.zeros(self.n_total, dtype=np.float64)
+        if self._is_single_direct:
+            s = np.dot(self._dense_weights, inputs)
+            return [float(self._single_act(self._single_bias + s))]
+
+        vals = self._vals
         vals[:self.n_inputs] = inputs
         for node_idx, bias, weights, src_indices, act_func in self._vectorized_evals:
             s = np.dot(weights, vals[src_indices])
